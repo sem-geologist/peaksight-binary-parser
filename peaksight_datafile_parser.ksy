@@ -186,6 +186,7 @@ types:
           cases:
             'analysis_mode::by_stochiometry': stochiometry_info
             'analysis_mode::matrix_def_and_stoch': matrix_definition_and_stoch_info
+            'analysis_mode::stoch_and_difference': stoch_and_difference_info
       - id: reserved_2
         size: 16
       - id: geo_species_name
@@ -232,6 +233,21 @@ types:
         type: element_weight
         repeat: expr
         repeat-expr: n_elements
+        
+  stoch_and_difference_info:
+    seq:
+      - id: reserved_0
+        size: 4
+      - id: element_for_stochiometry
+        type: u4
+      - id: n_changed_oxy_states
+        type: u4
+      - id: oxy_state_changes
+        type: element_oxy_state
+        repeat: expr
+        repeat-expr: n_changed_oxy_states
+      - id: element_by_difference
+        type: u4
         
   embedded_mac_table:
     seq:
@@ -979,5 +995,7 @@ enums:
   analysis_mode:
     0: all
     1: by_stochiometry
-    #2-6?
+    #2? by_difference
+    3: stoch_and_difference
+    #4-6? matrix_definition
     7: matrix_def_and_stoch
