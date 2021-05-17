@@ -76,7 +76,7 @@ types:
       - id: text
         type: str
         size: str_len
-        encoding: ASCII
+        encoding: CP1252
 
   file_modification:
     seq:
