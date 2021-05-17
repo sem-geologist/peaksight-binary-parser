@@ -3,7 +3,7 @@ meta:
   title: Cameca Peaksight binary data parser
   file-extension:
     - qtiDat
-    - imgDat
+    - impDat
     - wdsDat
     - calDat
   endian: le
@@ -35,7 +35,7 @@ seq:
     type: sxf_head
   - id: sxf_data
     type: sxf_main
-    if: sxf_header.file_type.to_i > 5  # qtiDat, imgDat, wdsDat (and calDat)
+    if: sxf_header.file_type.to_i > 5  # qtiDat, impDat, wdsDat (and calDat)
   #- id: sxf_footer
   #  type: sxf_tail
 
