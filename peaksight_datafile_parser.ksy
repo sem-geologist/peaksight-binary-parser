@@ -125,7 +125,7 @@ types:
       - id: dts_header
         type: dataset_header
       - id: dts_main
-        type: data_common
+        type: data_common(dts_header.n_of_steps)
         repeat: expr
         repeat-expr: dts_header.n_of_elements
       - id: comment
@@ -162,10 +162,14 @@ types:
           cases:
             'dts_footer_type::img_sec_footer': dts_img_sec_footer
             'dts_footer_type::wds_and_cal_footer': dts_wds_calib_footer
-            'dts_footer_type::qti_v5_footer': dts_qti_footer
-            'dts_footer_type::qti_v6_footer': dts_qti_footer
+            'dts_footer_type::qti_v5_footer': dts_qti_footer(footer_type)
+            'dts_footer_type::qti_v6_footer': dts_qti_footer(footer_type)
   
   dts_qti_footer:
+    params:
+      - id: footer_type
+        type: u4
+        enum: dts_footer_type
     seq:
       - id: reserved_0
         size: 4
@@ -195,10 +199,10 @@ types:
         size: 12
       - id: reserved_4
         size: 4
-        if: _parent.footer_type == dts_footer_type::qti_v6_footer
+        if: footer_type == dts_footer_type::qti_v6_footer
       - id: mac_table
         type: embedded_mac_table
-        if: _parent.footer_type == dts_footer_type::qti_v6_footer
+        if: footer_type == dts_footer_type::qti_v6_footer
   
   stochiometry_info:
     seq:
@@ -344,6 +348,9 @@ types:
         type: u4
 
   data_common:
+    params:
+      - id: n_steps
+        type: u4
     seq:
       - id: version
         type: u4
@@ -374,7 +381,7 @@ types:
           cases:
             'file_type::image_mapping_results': image_section_data
             'file_type::wds_results': wds_scan_data
-            'file_type::quanti_results': qti_data
+            'file_type::quanti_results': qti_data(n_steps)
             'file_type::calibration_results': calib_data
         
   xray_signal_header:
@@ -615,6 +622,9 @@ types:
         repeat-expr: n_calib_points
 
   qti_data:
+    params:
+      - id: n_steps
+        type: u4
     seq:
       - id: version
         type: u4
@@ -624,7 +634,10 @@ types:
       - id: data_size
         type: u4
       - id: data
-        size: data_size
+        #size: data_size
+        type: qti_data_item
+        repeat: expr
+        repeat-expr: n_steps
       - id: reserved_0
         type: u4
       - id: standard_name
@@ -816,7 +829,96 @@ types:
         type: u4
       - id: reserverd2
         type: u4
-
+   
+  qti_data_item:
+    seq:
+      - id: version
+        type: u4
+      - id: fara_meas
+        type: f4
+      - id: peak_cps
+        type: f4
+      - id: peak_time
+        type: f4
+      - id: bkgd_under_peak_cps
+        type: f4
+      - id: bkgd_1_cps
+        type: f4
+      - id: bkgd_2_cps
+        type: f4
+      - id: ix_div_istd
+        type: f4
+      - id: ix_div_ipure
+        type: f4
+      - id: weight_fraction
+        type: f4
+      - id: normalised_weight_f
+        type: f4
+      - id: atomic_fraction
+        type: f4
+      - id: oxide_fraction
+        type: f4
+      - id: detection_limit
+        type: f4
+      - id: standard_deviation
+        type: f4
+      - id: z
+        type: f4
+      - id: a
+        type: f4
+      - id: f
+        type: f4
+      - id: not_re_1
+        type: u4
+      - id: not_re_2
+        type: f4
+      - id: not_re_3
+        type: f4
+      - id: peak_raw_pulses
+        type: u4
+      - id: bkgd_1_raw_pulses
+        type: u4
+      - id: bkgd_2_raw_pulses
+        type: u4
+      - id: subcounting_mode
+        type: u4
+        enum: subcounting_mode
+      - id: n_sub_count
+        type: u4
+      - id: subcount_peak_enabled_flags
+        type: u4
+      - id: subcount_peak_pulses
+        type: u4
+        repeat: expr
+        repeat-expr: n_sub_count
+      - id: padding_0
+        size: (30 - n_sub_count) * 4  # 30 is maximum number of subcounts
+      - id: reserved_0
+        size: 4
+      - id: subcount_bkgd1_enabled_flags
+        type: u4
+      - id: subcount_bkgd1_pulses
+        type: u4
+        repeat: expr
+        repeat-expr: n_sub_count
+      - id: padding_1
+        size: (30 - n_sub_count) * 4
+      - id: subcount_bkgd2_enabled_flags
+        type: u4
+      - id: subcount_bkgd2_pulses
+        type: u4
+        repeat: expr
+        repeat-expr: n_sub_count
+      - id: padding_2
+        size: (30 - n_sub_count) * 4
+      - id: bkgd_time
+        type: f4
+      - id: padding_v11
+        size: 8
+        if: version >= 11
+      #- id: dbg
+      #  type: qti_data_item_dbg
+    
   image_data:
     seq:
       - id: n_accumulation
@@ -999,3 +1101,13 @@ enums:
     3: stoch_and_difference
     #4-6? matrix_definition
     7: matrix_def_and_stoch
+    
+  subcounting_mode:
+    0: none
+    1: subcounting_p_b_p_b
+    2: subcounting_p_p_b_b
+    3: time_0_intercept
+    4: decontamination_auto_test
+    5: chi_square_test
+    6: sub_chi_p_b_p_b
+    7: sub_chi_p_p_b_b
