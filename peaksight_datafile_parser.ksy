@@ -959,6 +959,8 @@ types:
       If dataset is composed from multiple items this struct
       also will contain valid x,y and z stage coordinates;
       otherwise often those attributes here are zeros.
+      Also this section holds calculated age and 1sigma error, if
+      age calculation was done and saved with peaksight.
     seq:
       - id: version
         type: u4
@@ -971,9 +973,17 @@ types:
         type: f4
       - id: z_axis
         type: f4
-      - id: unknown1
-        size: 76
-      - id: unknown2
+      - id: reserved_0
+        size: 8
+      - id: not_re_0
+        type: u4
+      - id: age
+        type: f4
+      - id: age_err
+        type: f4
+      - id: reserved_1
+        size: 56
+      - id: reserved_v6
         size: 24
         if: version == 6
 
@@ -1111,3 +1121,4 @@ enums:
     5: chi_square_test
     6: sub_chi_p_b_p_b
     7: sub_chi_p_p_b_b
+    
