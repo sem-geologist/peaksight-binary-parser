@@ -274,20 +274,20 @@ types:
         type: u2
       - id: value
         type: f4
-    
+  
   dts_wds_calib_footer:
     seq:
       - id: reserved_0
         size: 4
-        if: _root.sxf_header.file_type.to_i == 8
+        if: _root.sxf_header.file_type == file_type::calibration_results
       - id: n_space_time
         type: u4
-        if: _root.sxf_header.file_type.to_i == 8
+        if: _root.sxf_header.file_type == file_type::calibration_results
       - id: datetime_and_pos
         type: space_time
         repeat: expr
         repeat-expr: |
-          _root.sxf_header.file_type.to_i == 8 ?
+          _root.sxf_header.file_type == file_type::calibration_results ?
           n_space_time : 1
       - id: reserved_1
         size:  4
@@ -321,8 +321,7 @@ types:
         type: u4
       - id: n_of_lines  # height
         type: u4
-      - id: not_re_dataset_flags  # TODO
-        # focus?, verifyAfterFlip,VerifyXtal,bkgmeas, wait time?
+      - id: not_re_dataset_flags
         type: s4
         repeat: expr
         repeat-expr: 6
@@ -333,15 +332,23 @@ types:
       - id: not_re_flags2  # TODO
         type: s4
         repeat: expr
-        repeat-expr: 5
+        repeat-expr: 2
+      - id: beam_measurement_freq
+        type: u4
+      - id: not_re_flags3
+        type: s4
+        repeat: expr
+        repeat-expr: 2
       - id: mosaic_cols
         type: u4
       - id: mosaic_rows
         type: u4
-      - id: not_re_flags3  # TODO
+      - id: focus_freq
+        type: u4
+      - id: load_setup_everyth_nth
+        type: u4
+      - id: not_re_flag4  # TODO
         type: s4
-        repeat: expr
-        repeat-expr: 3
       - id: setup_file_name
         type: c_sharp_string
       - id: n_of_elements
