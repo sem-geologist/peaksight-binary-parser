@@ -36,12 +36,237 @@ seq:
   - id: sxf_data
     type: sxf_main
     if: sxf_header.file_type.to_i > 5  # qtiDat, impDat, wdsDat (and calDat)
+  - id: sxf_setup
+    type: sxf_setup
+    if: sxf_header.file_type.to_i < 5  # qtiSet, impSet...
   #- id: sxf_footer
   #  type: sxf_tail
 
-
 types:
-
+  sxf_setup:
+    seq:
+      - id: reserved_0
+        size: 12
+      - id: n_sub_setups
+        type: u4
+      - id: subsetups
+        type: sub_setup
+        #repeat: expr
+        #repeat-expr: n_sub_setups
+        
+  sub_setup:
+    seq:
+      - id: version
+        type: u4
+      - id: reserved_0
+        size: 4
+      - id: condition_name
+        type: c_sharp_string
+      - id: reserved_1
+        size: 20
+      - id: heat
+        type: u4
+        doc: fixed point as integer
+      - id: hv
+        type: u4
+      - id: i_emission
+        type: u4
+      - id: xhi
+        type: s4
+      - id: yhi
+        type: s4
+      - id: xlo
+        type: s4
+      - id: ylo
+        type: s4
+      - id: aperture_x
+        type: s4
+      - id: aperture_y
+        type: s4
+      - id: c1
+        type: u4
+      - id: c2
+        type: u4
+      - id: reserved_2
+        size: 4
+      - id: current_set
+        type: s4
+      - id: beam_focus
+        type: s4
+      - id: reserved_3
+        type: s4
+      - id: reserved_4
+        type: s4
+      - id: beam_focus_2
+        type: s4
+      - id: beam_size
+        type: s4
+      - id: stigmator_amplitude
+        type: s4
+      - id: stigmator_angle
+        type: s4
+      - id: reserved_flags_5
+        type: s4
+        repeat: expr
+        repeat-expr: 6
+      - id: extractor
+        type: s4  # TODO is it?
+      - id: suppressor
+        type: s4
+      - id: reserved_flags_6
+        type: s4
+        repeat: expr
+        repeat-expr: 86
+      - id: n_eds_measurement_setups
+        type: u4
+      - id: eds_measurement_setups
+        type: qti_eds_measurement_setup
+        repeat: expr
+        repeat-expr: n_eds_measurement_setups
+      - id: default_eds_live_time
+        type: f4
+      - id: not_re_flag_5
+        type: u4
+      - id: eds_roi_fwhm
+        type: f4
+      - id: reserved_flags_7
+        size: 8
+      - id: wds_measurement_struct_type
+        type: u4
+      - id: wds_img_measurement_setups
+        type: img_wds_measurement_setups
+        if: wds_measurement_struct_type == 3
+      - id: wds_qti_measurement_setups
+        type: qti_wds_measurement_setups
+        if: wds_measurement_struct_type >= 19
+      - id: reserved_v20
+        size: 140
+        if: wds_measurement_struct_type >= 20
+  
+  img_wds_measurement_setups:
+    seq:
+      - id: wds_img_measurement_setups
+        type: img_wds_measurement_setup
+        repeat: expr
+        repeat-expr: 5
+        
+  qti_wds_measurement_setups:
+    seq:
+      - id: qti_setup_reserved_0
+        size: 20
+      - id: n_wds_measurements
+        type: u4
+      - id: qti_wds_measurement_setups
+        type: qti_wds_measurement_setup
+        repeat: expr
+        repeat-expr: n_wds_measurements
+      - id: reserved_0
+        size: 28
+      - id: qti_analysis_mode
+        type: u4
+        enum: analysis_mode
+      - id: analysis_mode_info
+        type:
+          switch-on: qti_analysis_mode
+          cases:
+            'analysis_mode::by_stochiometry': stochiometry_info
+            'analysis_mode::by_difference': by_difference_info
+            'analysis_mode::matrix_def_and_stoch': matrix_definition_and_stoch_info
+            'analysis_mode::with_matrix_definition': matrix_definition_info
+            'analysis_mode::stoch_and_difference': stoch_and_difference_info
+      - id: reserved_2
+        size: 16
+      - id: geo_species_name
+        type: c_sharp_string
+      - id: reserved_3
+        size: 4
+        
+  
+  img_wds_measurement_setup:
+    seq:
+      - id: rev_xtal_string
+        size: 4
+      - id: two_d
+        type: f4
+      - id: k
+        type: f4
+      - id: peak_position
+        type: u4
+      - id: element
+        type: u4
+      - id: line
+        type: u4
+      - id: order
+        type: u4  #TODO check if it is true
+      - id: counter_setting
+        type: counter_setting
+      - id: padding_0
+        size: 12
+  
+  qti_eds_measurement_setup:
+    seq:
+      - id: reserved_0
+        type: u4
+      - id: element
+        type: u4
+      - id: line
+        type: u4
+      - id: reserved_1
+        size: 12
+      
+  
+  qti_wds_measurement_setup:
+    seq:
+      # TODO Where is line order?
+      - id: element
+        type: u4
+      - id: line
+        type: u4
+      - id: spect_number
+        type: u4
+      - id: rev_xtal_name
+        type: s4
+      - id: not_re_flag_0
+        type: f4
+      - id: not_re_flag_1
+        type: f4
+      - id: calibration_file
+        type: c_sharp_string
+      - id: reserved_0  # Is order in this?
+        size: 12
+      - id: peak_position
+        type: u4
+      - id: peak_time
+        type: f4
+      - id: offset_bkgd_1
+        type: s4
+      - id: offset_bkgd_2
+        type: s4
+      - id: slope
+        type: f4
+      - id: bkgd_time
+        type: f4
+      - id: counter_setting
+        type: counter_setting
+      - id: one_div_sqrt_n
+        type: f4
+      - id: reserved_1
+        size: 12
+      - id: background_type
+        type: u4
+        enum: background_type
+      - id: reserved_2
+        size: 180
+      - id: subcounting_flag
+        type: u4
+        enum: subcounting_mode
+      - id: reserved_3
+        size: 156
+      - id: reserved_v4
+        size: 4
+        if: _root.sxf_header.sxf_version >= 4
+        
+      
   sxf_head:
     seq:
       - id: file_type
@@ -164,7 +389,7 @@ types:
             'dts_footer_type::wds_and_cal_footer': dts_wds_calib_footer
             'dts_footer_type::qti_v5_footer': dts_qti_footer(footer_type)
             'dts_footer_type::qti_v6_footer': dts_qti_footer(footer_type)
-  
+
   dts_qti_footer:
     params:
       - id: footer_type
@@ -189,7 +414,9 @@ types:
           switch-on: qti_analysis_mode
           cases:
             'analysis_mode::by_stochiometry': stochiometry_info
+            'analysis_mode::by_difference': by_difference_info
             'analysis_mode::matrix_def_and_stoch': matrix_definition_and_stoch_info
+            'analysis_mode::with_matrix_definition': matrix_definition_info
             'analysis_mode::stoch_and_difference': stoch_and_difference_info
       - id: reserved_2
         size: 16
@@ -216,6 +443,23 @@ types:
         type: element_oxy_state
         repeat: expr
         repeat-expr: n_changed_oxy_states
+  
+  by_difference_info:
+    seq:
+      - id: element_by_difference
+        type: u4
+  
+  matrix_definition_info:
+    seq:
+      - id: reserved_0
+        size: 4
+      - id: n_elements
+        type: u4
+      - id: element_table
+        type: element_weight
+        repeat: expr
+        repeat-expr: n_elements
+      
   
   matrix_definition_and_stoch_info:
     seq:
@@ -425,6 +669,11 @@ types:
         type: f4
       - id: peak_pos
         type: u4
+      - id: counter_setting
+        type: counter_setting
+  
+  counter_setting:
+    seq:
       - id: bias
         type: u4
       - id: gain
@@ -438,7 +687,7 @@ types:
       - id: mode
         type: u4
         enum: pha_mode
-  
+        
   empty_signal_header:
     seq:
       - id: dummy
@@ -923,9 +1172,7 @@ types:
       - id: padding_v11
         size: 8
         if: version >= 11
-      #- id: dbg
-      #  type: qti_data_item_dbg
-    
+
   image_data:
     seq:
       - id: n_accumulation
@@ -1114,9 +1361,10 @@ enums:
   analysis_mode:
     0: all
     1: by_stochiometry
-    #2? by_difference
+    2: by_difference
     3: stoch_and_difference
-    #4-6? matrix_definition
+    4: with_matrix_definition
+    #5-6 ???
     7: matrix_def_and_stoch
     
   subcounting_mode:
@@ -1128,4 +1376,7 @@ enums:
     5: chi_square_test
     6: sub_chi_p_b_p_b
     7: sub_chi_p_p_b_b
-    
+  
+  background_type:
+    1: linear
+    2: exponential
