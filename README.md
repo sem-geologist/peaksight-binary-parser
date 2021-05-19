@@ -3,7 +3,7 @@ kaitai_struct parser to read binary electron microprobe data files produced with
 
 ### Roadmap
 
-- [ ] make parser to read without throwing any errors any of below listed binary data:
+- [x] make parser to read without throwing any errors any of below listed binary data:
   - [x] qtiDat
   - [x] wdsDat
   - [x] impDat
@@ -11,8 +11,8 @@ kaitai_struct parser to read binary electron microprobe data files produced with
   - [x] calSet
   - [x] qtiSet
   - [x] impSet
-  - [ ] wdsSet
-  - [ ] ovl
+  - [x] wdsSet
+  - [x] ovl
 - [ ] code deduplication and optimization (There needs to be achieved compromise. Duplicate structures can allow the resulting tree to be more flat (which is good when using in target language), where deduplication causes more deeper data tree, but is easier to maintain (which is good for maintaining the parser)) 
 - [ ] add language agnostic instancies for some attributes which can be prepared in language-agnostic way in kaitai struct
 - [ ] add doc strings to explain further some halfly-parsed data
