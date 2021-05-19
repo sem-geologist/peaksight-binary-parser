@@ -6,6 +6,11 @@ meta:
     - impDat
     - wdsDat
     - calDat
+    - qtiSet
+    - wdsSet
+    - calSet
+    - impSet
+    - ovl
   endian: le
   license: LGPL-3.0-or-later
   ks-version: 0.9
@@ -33,17 +38,72 @@ doc: |
 seq:
   - id: sxf_header
     type: sxf_head
-  - id: sxf_data
-    type: sxf_main
-    if: sxf_header.file_type.to_i > 5  # qtiDat, impDat, wdsDat (and calDat)
-  - id: sxf_setup
-    type: sxf_setup
-    if: sxf_header.file_type.to_i < 5  # qtiSet, impSet...
-  #- id: sxf_footer
-  #  type: sxf_tail
+  - id: sxf_main
+    type:
+      switch-on: sxf_header.file_type
+      cases:
+        'file_type::wds_setup': wds_setup
+        'file_type::image_mapping_setup': qti_cal_img_setup
+        'file_type::calibration_setup': qti_cal_img_setup
+        'file_type::quanti_setup': qti_cal_img_setup
+        'file_type::wds_results': sxf_main
+        'file_type::image_mapping_results': sxf_main
+        'file_type::calibration_results': sxf_main
+        'file_type::quanti_results': sxf_main
+        'file_type::overlap_table': overlap_corrections
 
 types:
-  sxf_setup:
+  overlap_corrections:
+    seq:
+      - id: reserved_0
+        size: 4
+      - id: n_corrections
+        type: u4
+      - id: overlap_correction_table
+        type: overlap_table_item
+        repeat: expr
+        repeat-expr: n_corrections
+        
+  overlap_table_item:
+    seq:
+      - id: version
+        type: u4
+      - id: element
+        type: u4
+      - id: line
+        type: u4
+      - id: i_element
+        type: u4
+      - id: i_line
+        type: u4
+      - id: i_order
+        type: u4
+      - id: i_offset
+        type: s4
+      - id: hv
+        type: f4
+      - id: beam_current
+        type: f4
+      - id: peak_min_bkgd
+        type: f4
+      - id: standard_name
+        type: c_sharp_string
+      - id: nr_in_standard_db
+        type: u4
+      - id: spect_nr
+        type: u4
+      - id: rev_xtal_name
+        size: 4
+      - id: dwell_time
+        type: f4
+        if: version >= 3
+      - id: reserved_0
+        size: 4
+      
+        
+  
+  qti_cal_img_setup:
+    doc: this is a rought reverse engineared and far from complete
     seq:
       - id: reserved_0
         size: 12
@@ -51,10 +111,23 @@ types:
         type: u4
       - id: subsetups
         type: sub_setup
-        #repeat: expr
-        #repeat-expr: n_sub_setups
+        repeat: expr
+        repeat-expr: n_sub_setups
+
+  wds_setup:
+    doc: this is roughly reverse engineared and far from complete
+    seq:
+      - id: reserved_0
+        size: 12
+      - id: wds_scan_spect_setups
+        type: wds_scan_spect_setup
+        repeat: expr
+        repeat-expr: 5
+      - id: column_and_sem_setup
+        type: sub_setup
         
   sub_setup:
+    doc: this is a rought reverse engineared and far from complete
     seq:
       - id: version
         type: u4
@@ -116,13 +189,16 @@ types:
       - id: reserved_flags_6
         type: s4
         repeat: expr
-        repeat-expr: 86
+        repeat-expr: |
+          _root.sxf_header.file_type.to_i > 1 ? 86 : 85
       - id: n_eds_measurement_setups
         type: u4
+        if: _root.sxf_header.file_type.to_i > 1
       - id: eds_measurement_setups
         type: qti_eds_measurement_setup
         repeat: expr
         repeat-expr: n_eds_measurement_setups
+        if: _root.sxf_header.file_type.to_i > 1
       - id: default_eds_live_time
         type: f4
       - id: not_re_flag_5
@@ -133,8 +209,9 @@ types:
         size: 8
       - id: wds_measurement_struct_type
         type: u4
-      - id: wds_img_measurement_setups
-        type: img_wds_measurement_setups
+        if: _root.sxf_header.file_type.to_i > 1
+      - id: wds_img_spect_setups
+        type: img_wds_spect_setups
         if: wds_measurement_struct_type == 3
       - id: wds_qti_measurement_setups
         type: qti_wds_measurement_setups
@@ -143,10 +220,48 @@ types:
         size: 140
         if: wds_measurement_struct_type >= 20
   
-  img_wds_measurement_setups:
+  wds_scan_spect_setup:
     seq:
-      - id: wds_img_measurement_setups
-        type: img_wds_measurement_setup
+      - id: rev_xtal_string
+        size: 4
+      - id: two_d
+        type: f4
+      - id: k
+        type: f4
+      - id: wds_scan_type
+        type: u4
+        enum: wds_scan_type
+      - id: min_pos
+        type: u4
+      - id: reserved_1
+        type: u4
+      - id: reserved_2
+        type: u4
+      - id: reserved_3
+        type: u4
+      - id: max_pos
+        type: u4
+      - id: reserved_4
+        size: 4 * 3
+      - id: position
+        type: u4
+      - id: element
+        type: u4
+      - id: line
+        type: u4
+      - id: order # TODO is it????
+        type: u4
+      - id: offset_1
+        type: s4
+      - id: offset_2
+        type: s4
+      - id: counter_setting
+        type: counter_setting
+  
+  img_wds_spect_setups:
+    seq:
+      - id: wds_img_spect_setup_table
+        type: img_wds_spect_setup
         repeat: expr
         repeat-expr: 5
         
@@ -182,7 +297,7 @@ types:
         size: 4
         
   
-  img_wds_measurement_setup:
+  img_wds_spect_setup:
     seq:
       - id: rev_xtal_string
         size: 4
@@ -1380,3 +1495,8 @@ enums:
   background_type:
     1: linear
     2: exponential
+    
+  wds_scan_type:
+    0: full
+    1: relative
+    2: absolute
