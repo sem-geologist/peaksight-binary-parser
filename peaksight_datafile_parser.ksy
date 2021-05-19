@@ -51,8 +51,21 @@ seq:
         'file_type::calibration_results': sxf_main
         'file_type::quanti_results': sxf_main
         'file_type::overlap_table': overlap_corrections
+  - id: sxf_footer
+    type:
+      switch-on: sxf_header.file_type
+      cases:
+        'file_type::wds_results': sxf_footer
+        'file_type::image_mapping_results': sxf_footer
+        'file_type::calibration_results': sxf_footer
+        'file_type::quanti_results': sxf_footer
 
 types:
+  sxf_footer:
+    seq:
+      - id: footer
+        size: _root.sxf_header.sxf_version == 3 ? 232 : 244
+    
   overlap_corrections:
     seq:
       - id: reserved_0
@@ -465,7 +478,7 @@ types:
       - id: dts_header
         type: dataset_header
       - id: dts_main
-        type: data_common(dts_header.n_of_steps)
+        type: data_common(dts_header.n_of_points)
         repeat: expr
         repeat-expr: dts_header.n_of_elements
       - id: comment
@@ -504,7 +517,7 @@ types:
             'dts_footer_type::wds_and_cal_footer': dts_wds_calib_footer
             'dts_footer_type::qti_v5_footer': dts_qti_footer(footer_type)
             'dts_footer_type::qti_v6_footer': dts_qti_footer(footer_type)
-
+  
   dts_qti_footer:
     params:
       - id: footer_type
@@ -693,7 +706,7 @@ types:
         repeat: expr
         repeat-expr: 2
       - id: beam_measurement_freq
-        type: u4
+        type: f4
       - id: not_re_flags3
         type: s4
         repeat: expr
@@ -712,6 +725,10 @@ types:
         type: c_sharp_string
       - id: n_of_elements
         type: u4
+    
+    instances:
+      n_of_points:
+        value: n_of_steps * n_of_lines
 
   data_common:
     params:
