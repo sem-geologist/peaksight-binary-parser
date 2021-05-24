@@ -16,23 +16,22 @@ meta:
   ks-version: 0.9
   
 doc: |
-  This parser is for parsing proprietary binary data formats produced with
-  Cameca Peaksight software for EPMA.
+  This parser is created for reading the proprietary binary data formats
+  produced with Cameca Peaksight software for EPMA.
   
   DISCLAIMERS
-  This Kaitai_struct parser implementation was reverse engineered
-  by Petras Jokubauskas (klavishas@gmail.com; p.jokubauskas@uw.edu.pl),
-  and it is very likely to be incomplete. Author of this reverse engineered
-  format implementation is not affiliated with the Cameca or Ametek inc.
-  Mentioning of words, which by some parts could be argued to be trademark,
-  is here only for informative documentation of the code and
-  it is not used for self-advertise or criticism of rightful trademark holders.
-  This reverse engineering attemt is done for interoperability and
+  This reverse engineering based implementation is granted by Petras Jokubauskas
+  (klavishas@gmail.com; p.jokubauskas@uw.edu.pl).
+  Author of this implementation is not affiliated with the Cameca or Ametek inc.
+  Words, which by some parts could be recognized to be a trademark,
+  are used in this file only for informative documentation of the code and
+  it is not used for self-advertisement or criticism of rightful trademark holders.
+  This reverse engineering pursuit is aimed for interoperability and
   such right is protected by EU directive 2009/24/EC.
   
-  This format implementation is distributed in the hope that it will be useful,
+  This RE-based implementation of formats is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   Lesser General Public License for more details.
 
 seq:
@@ -43,358 +42,17 @@ seq:
       switch-on: sxf_header.file_type
       cases:
         'file_type::wds_setup': wds_setup
-        'file_type::image_mapping_setup': qti_cal_img_setup
-        'file_type::calibration_setup': qti_cal_img_setup
-        'file_type::quanti_setup': qti_cal_img_setup
+        'file_type::image_mapping_setup': img_setup
+        'file_type::calibration_setup': qti_cal_setup
+        'file_type::quanti_setup': qti_cal_setup
         'file_type::wds_results': sxf_main
         'file_type::image_mapping_results': sxf_main
         'file_type::calibration_results': sxf_main
         'file_type::quanti_results': sxf_main
         'file_type::overlap_table': overlap_corrections
-  - id: sxf_footer
-    type:
-      switch-on: sxf_header.file_type
-      cases:
-        'file_type::wds_results': sxf_footer
-        'file_type::image_mapping_results': sxf_footer
-        'file_type::calibration_results': sxf_footer
-        'file_type::quanti_results': sxf_footer
 
 types:
-  sxf_footer:
-    seq:
-      - id: footer
-        size: _root.sxf_header.sxf_version == 3 ? 232 : 244
-    
-  overlap_corrections:
-    seq:
-      - id: reserved_0
-        size: 4
-      - id: n_corrections
-        type: u4
-      - id: overlap_correction_table
-        type: overlap_table_item
-        repeat: expr
-        repeat-expr: n_corrections
-        
-  overlap_table_item:
-    seq:
-      - id: version
-        type: u4
-      - id: element
-        type: u4
-      - id: line
-        type: u4
-      - id: i_element
-        type: u4
-      - id: i_line
-        type: u4
-      - id: i_order
-        type: u4
-      - id: i_offset
-        type: s4
-      - id: hv
-        type: f4
-      - id: beam_current
-        type: f4
-      - id: peak_min_bkgd
-        type: f4
-      - id: standard_name
-        type: c_sharp_string
-      - id: nr_in_standard_db
-        type: u4
-      - id: spect_nr
-        type: u4
-      - id: rev_xtal_name
-        size: 4
-      - id: dwell_time
-        type: f4
-        if: version >= 3
-      - id: reserved_0
-        size: 4
-      
-        
-  
-  qti_cal_img_setup:
-    doc: this is a rought reverse engineared and far from complete
-    seq:
-      - id: reserved_0
-        size: 12
-      - id: n_sub_setups
-        type: u4
-      - id: subsetups
-        type: sub_setup
-        repeat: expr
-        repeat-expr: n_sub_setups
 
-  wds_setup:
-    doc: this is roughly reverse engineared and far from complete
-    seq:
-      - id: reserved_0
-        size: 12
-      - id: wds_scan_spect_setups
-        type: wds_scan_spect_setup
-        repeat: expr
-        repeat-expr: 5
-      - id: column_and_sem_setup
-        type: sub_setup
-        
-  sub_setup:
-    doc: this is a rought reverse engineared and far from complete
-    seq:
-      - id: version
-        type: u4
-      - id: reserved_0
-        size: 4
-      - id: condition_name
-        type: c_sharp_string
-      - id: reserved_1
-        size: 20
-      - id: heat
-        type: u4
-        doc: fixed point as integer
-      - id: hv
-        type: u4
-      - id: i_emission
-        type: u4
-      - id: xhi
-        type: s4
-      - id: yhi
-        type: s4
-      - id: xlo
-        type: s4
-      - id: ylo
-        type: s4
-      - id: aperture_x
-        type: s4
-      - id: aperture_y
-        type: s4
-      - id: c1
-        type: u4
-      - id: c2
-        type: u4
-      - id: reserved_2
-        size: 4
-      - id: current_set
-        type: s4
-      - id: beam_focus
-        type: s4
-      - id: reserved_3
-        type: s4
-      - id: reserved_4
-        type: s4
-      - id: beam_focus_2
-        type: s4
-      - id: beam_size
-        type: s4
-      - id: stigmator_amplitude
-        type: s4
-      - id: stigmator_angle
-        type: s4
-      - id: reserved_flags_5
-        type: s4
-        repeat: expr
-        repeat-expr: 6
-      - id: extractor
-        type: s4  # TODO is it?
-      - id: suppressor
-        type: s4
-      - id: reserved_flags_6
-        type: s4
-        repeat: expr
-        repeat-expr: |
-          _root.sxf_header.file_type.to_i > 1 ? 86 : 85
-      - id: n_eds_measurement_setups
-        type: u4
-        if: _root.sxf_header.file_type.to_i > 1
-      - id: eds_measurement_setups
-        type: qti_eds_measurement_setup
-        repeat: expr
-        repeat-expr: n_eds_measurement_setups
-        if: _root.sxf_header.file_type.to_i > 1
-      - id: default_eds_live_time
-        type: f4
-      - id: not_re_flag_5
-        type: u4
-      - id: eds_roi_fwhm
-        type: f4
-      - id: reserved_flags_7
-        size: 8
-      - id: wds_measurement_struct_type
-        type: u4
-        if: _root.sxf_header.file_type.to_i > 1
-      - id: wds_img_spect_setups
-        type: img_wds_spect_setups
-        if: wds_measurement_struct_type == 3
-      - id: wds_qti_measurement_setups
-        type: qti_wds_measurement_setups
-        if: wds_measurement_struct_type >= 19
-      - id: reserved_v20
-        size: 140
-        if: wds_measurement_struct_type >= 20
-  
-  wds_scan_spect_setup:
-    seq:
-      - id: rev_xtal_string
-        size: 4
-      - id: two_d
-        type: f4
-      - id: k
-        type: f4
-      - id: wds_scan_type
-        type: u4
-        enum: wds_scan_type
-      - id: min_pos
-        type: u4
-      - id: reserved_1
-        type: u4
-      - id: reserved_2
-        type: u4
-      - id: reserved_3
-        type: u4
-      - id: max_pos
-        type: u4
-      - id: reserved_4
-        size: 4 * 3
-      - id: position
-        type: u4
-      - id: element
-        type: u4
-      - id: line
-        type: u4
-      - id: order # TODO is it????
-        type: u4
-      - id: offset_1
-        type: s4
-      - id: offset_2
-        type: s4
-      - id: counter_setting
-        type: counter_setting
-  
-  img_wds_spect_setups:
-    seq:
-      - id: wds_img_spect_setup_table
-        type: img_wds_spect_setup
-        repeat: expr
-        repeat-expr: 5
-        
-  qti_wds_measurement_setups:
-    seq:
-      - id: qti_setup_reserved_0
-        size: 20
-      - id: n_wds_measurements
-        type: u4
-      - id: qti_wds_measurement_setups
-        type: qti_wds_measurement_setup
-        repeat: expr
-        repeat-expr: n_wds_measurements
-      - id: reserved_0
-        size: 28
-      - id: qti_analysis_mode
-        type: u4
-        enum: analysis_mode
-      - id: analysis_mode_info
-        type:
-          switch-on: qti_analysis_mode
-          cases:
-            'analysis_mode::by_stochiometry': stochiometry_info
-            'analysis_mode::by_difference': by_difference_info
-            'analysis_mode::matrix_def_and_stoch': matrix_definition_and_stoch_info
-            'analysis_mode::with_matrix_definition': matrix_definition_info
-            'analysis_mode::stoch_and_difference': stoch_and_difference_info
-      - id: reserved_2
-        size: 16
-      - id: geo_species_name
-        type: c_sharp_string
-      - id: reserved_3
-        size: 4
-        
-  
-  img_wds_spect_setup:
-    seq:
-      - id: rev_xtal_string
-        size: 4
-      - id: two_d
-        type: f4
-      - id: k
-        type: f4
-      - id: peak_position
-        type: u4
-      - id: element
-        type: u4
-      - id: line
-        type: u4
-      - id: order
-        type: u4  #TODO check if it is true
-      - id: counter_setting
-        type: counter_setting
-      - id: padding_0
-        size: 12
-  
-  qti_eds_measurement_setup:
-    seq:
-      - id: reserved_0
-        type: u4
-      - id: element
-        type: u4
-      - id: line
-        type: u4
-      - id: reserved_1
-        size: 12
-      
-  
-  qti_wds_measurement_setup:
-    seq:
-      # TODO Where is line order?
-      - id: element
-        type: u4
-      - id: line
-        type: u4
-      - id: spect_number
-        type: u4
-      - id: rev_xtal_name
-        type: s4
-      - id: not_re_flag_0
-        type: f4
-      - id: not_re_flag_1
-        type: f4
-      - id: calibration_file
-        type: c_sharp_string
-      - id: reserved_0  # Is order in this?
-        size: 12
-      - id: peak_position
-        type: u4
-      - id: peak_time
-        type: f4
-      - id: offset_bkgd_1
-        type: s4
-      - id: offset_bkgd_2
-        type: s4
-      - id: slope
-        type: f4
-      - id: bkgd_time
-        type: f4
-      - id: counter_setting
-        type: counter_setting
-      - id: one_div_sqrt_n
-        type: f4
-      - id: reserved_1
-        size: 12
-      - id: background_type
-        type: u4
-        enum: background_type
-      - id: reserved_2
-        size: 180
-      - id: subcounting_flag
-        type: u4
-        enum: subcounting_mode
-      - id: reserved_3
-        size: 156
-      - id: reserved_v4
-        size: 4
-        if: _root.sxf_header.sxf_version >= 4
-        
-      
   sxf_head:
     seq:
       - id: file_type
@@ -422,15 +80,6 @@ types:
         type: f8
         if: sxf_version >= 5
 
-  c_sharp_string:
-    seq:
-      - id: str_len
-        type: u4
-      - id: text
-        type: str
-        size: str_len
-        encoding: CP1252
-
   file_modification:
     seq:
       - id: datetime
@@ -443,32 +92,45 @@ types:
           proper subdivision should be implemented in target language as kaitai
           is good binary parser.
 
+  c_sharp_string:
+    seq:
+      - id: str_len
+        type: u4
+      - id: text
+        type: str
+        size: str_len
+        encoding: CP1252
+
   sxf_main:
     seq:
       - id: version
         type: u4
-      - id: global_options
-        type: glob_opt
+      - id: focus_frequency
+        type: u4
+      - id: verify_xtal_after_flip
+        type: u4
+      - id: verify_xtal_before_start
+        type: u4
+      - id: bkgd_measure_every_nth
+        type: u4
+      - id: decontamination_time
+        type: u4
       - id: n_of_datasets
         type: u4
       - id: datasets
         type: dataset
         repeat: expr
         repeat-expr: n_of_datasets
+      - id: not_re_global_options
+        size: 12
+      - id: current_qti_set
+        type: c_sharp_string
+      - id: not_re_global_options_2
+        size: 216
+      - id: not_re_global_options_v4
+        size: 12
+        if: _root.sxf_header.sxf_version >= 4
         
-  glob_opt:
-    seq:
-      - id: focus_freq
-        type: u4
-      - id: verify_xtal_after_flip
-        type: u4
-      - id: verify_xtal_before_start
-        type: u4
-      - id: bkg_meas_every_nth
-        type: u4
-      - id: waiting_time
-        type: u4
-  
   dataset:
     doc: |
       Dataset is constructed form header, main and footer parts;
@@ -696,7 +358,13 @@ types:
       - id: not_re_dataset_flags
         type: s4
         repeat: expr
-        repeat-expr: 6
+        repeat-expr: 3
+      - id: n_accumulation
+        type: u4
+      - id: dwell_time
+        type: f4
+      - id: not_re_dataset_flag_4
+        type: s4
       - id: stage_z
         type: s4
         repeat: expr
@@ -729,10 +397,12 @@ types:
     instances:
       n_of_points:
         value: n_of_steps * n_of_lines
+      n_of_tiles:
+        value: mosaic_cols * mosaic_rows
 
   data_common:
     params:
-      - id: n_steps
+      - id: n_points
         type: u4
     seq:
       - id: version
@@ -764,7 +434,7 @@ types:
           cases:
             'file_type::image_mapping_results': image_section_data
             'file_type::wds_results': wds_scan_data
-            'file_type::quanti_results': qti_data(n_steps)
+            'file_type::quanti_results': qti_data(n_points)
             'file_type::calibration_results': calib_data
         
   xray_signal_header:
@@ -910,9 +580,6 @@ types:
         type: f4
       - id: intensity_max
         type: f4
-      # this 44 byte section probably is description which should save the
-      # zoomed image origin coordinates and visible pixels
-      # however it is not saved with peaksight >>>
       - id: reserved_1  # maybe it is x,y origin position
         size: 20
       - id: visible_width
@@ -1018,11 +685,10 @@ types:
         type: u4
       - id: dts_t
         type: u4
-        enum: dataset_type # is it? TODO
+        enum: dataset_type
       - id: data_size
         type: u4
       - id: data
-        #size: data_size
         type: qti_data_item
         repeat: expr
         repeat-expr: n_steps
@@ -1403,7 +1069,346 @@ types:
         type: element_weight
         repeat: expr
         repeat-expr: n_elements
+
+  overlap_corrections:
+    seq:
+      - id: reserved_0
+        size: 4
+      - id: n_corrections
+        type: u4
+      - id: overlap_correction_table
+        type: overlap_table_item
+        repeat: expr
+        repeat-expr: n_corrections
+        
+  overlap_table_item:
+    seq:
+      - id: version
+        type: u4
+      - id: element
+        type: u4
+      - id: line
+        type: u4
+      - id: i_element
+        type: u4
+      - id: i_line
+        type: u4
+      - id: i_order
+        type: u4
+      - id: i_offset
+        type: s4
+      - id: hv
+        type: f4
+      - id: beam_current
+        type: f4
+      - id: peak_min_bkgd
+        type: f4
+      - id: standard_name
+        type: c_sharp_string
+      - id: nr_in_standard_db
+        type: u4
+      - id: spect_nr
+        type: u4
+      - id: rev_xtal_name
+        size: 4
+      - id: dwell_time
+        type: f4
+        if: version >= 3
+      - id: reserved_0
+        size: 4
   
+  img_setup:
+    doc: this is roughly RE and far from complete
+    seq:
+      - id: reserved_0
+        size: 12
+      - id: n_sub_setups
+        type: u4
+      - id: subsetups
+        type: sub_setup
+        repeat: expr
+        repeat-expr: n_sub_setups
+  
+  qti_cal_setup:
+    doc: this is a rought reverse engineared and far from complete
+    seq:
+      - id: reserved_0
+        size: 12
+      - id: n_sub_setups
+        type: u4
+      - id: subsetups
+        type: sub_setup
+        repeat: expr
+        repeat-expr: n_sub_setups
+      - id: reserved_1
+        size: 28
+      - id: qti_analysis_mode
+        type: u4
+        enum: analysis_mode
+      - id: analysis_mode_info
+        type:
+          switch-on: qti_analysis_mode
+          cases:
+            'analysis_mode::by_stochiometry': stochiometry_info
+            'analysis_mode::by_difference': by_difference_info
+            'analysis_mode::matrix_def_and_stoch': matrix_definition_and_stoch_info
+            'analysis_mode::with_matrix_definition': matrix_definition_info
+            'analysis_mode::stoch_and_difference': stoch_and_difference_info
+      - id: reserved_2
+        size: 16
+      - id: geo_species_name
+        type: c_sharp_string
+      - id: reserved_3
+        size: 4
+      - id: reserved_v20
+        size: 140
+        if: _root.sxf_header.sxf_version >= 5
+
+  wds_setup:
+    doc: this is roughly reverse engineared and far from complete
+    seq:
+      - id: reserved_0
+        size: 12
+      - id: wds_scan_spect_setups
+        type: wds_scan_spect_setup
+        repeat: expr
+        repeat-expr: 5
+      - id: column_and_sem_setup
+        type: sub_setup
+        
+  sub_setup:
+    doc: this is a rought reverse engineared and far from complete
+    seq:
+      - id: version
+        type: u4
+      - id: reserved_0
+        size: 4
+      - id: condition_name
+        type: c_sharp_string
+      - id: reserved_1
+        size: 20
+      - id: heat
+        type: u4
+        doc: fixed point as integer
+      - id: hv
+        type: u4
+      - id: i_emission
+        type: u4
+      - id: xhi
+        type: s4
+      - id: yhi
+        type: s4
+      - id: xlo
+        type: s4
+      - id: ylo
+        type: s4
+      - id: aperture_x
+        type: s4
+      - id: aperture_y
+        type: s4
+      - id: c1
+        type: u4
+      - id: c2
+        type: u4
+      - id: reserved_2
+        size: 4
+      - id: current_set
+        type: s4
+      - id: beam_focus
+        type: s4
+      - id: reserved_3
+        type: s4
+      - id: reserved_4
+        type: s4
+      - id: beam_focus_2
+        type: s4
+      - id: beam_size
+        type: s4
+      - id: stigmator_amplitude
+        type: s4
+      - id: stigmator_angle
+        type: s4
+      - id: reserved_flags_5
+        type: s4
+        repeat: expr
+        repeat-expr: 6
+      - id: extractor
+        type: s4  # TODO is it?
+      - id: suppressor
+        type: s4
+      - id: reserved_flags_6
+        type: s4
+        repeat: expr
+        repeat-expr: |
+          _root.sxf_header.file_type.to_i > 1 ? 86 : 85
+      - id: n_eds_measurement_setups
+        type: u4
+        if: _root.sxf_header.file_type.to_i > 1
+      - id: eds_measurement_setups
+        type: qti_eds_measurement_setup
+        repeat: expr
+        repeat-expr: n_eds_measurement_setups
+        if: _root.sxf_header.file_type.to_i > 1
+      - id: default_eds_live_time
+        type: f4
+      - id: not_re_flag_5
+        type: u4
+      - id: eds_roi_fwhm
+        type: f4
+      - id: reserved_flags_7
+        size: 8
+      - id: wds_measurement_struct_type
+        type: u4
+        if: _root.sxf_header.file_type.to_i > 1
+      - id: wds_img_spect_setups
+        type: img_wds_spect_setups
+        if: wds_measurement_struct_type == 3
+      - id: wds_qti_measurement_setups
+        type: qti_wds_measurement_setups
+        if: wds_measurement_struct_type >= 19
+  
+  wds_scan_spect_setup:
+    seq:
+      - id: rev_xtal_string
+        size: 4
+      - id: two_d
+        type: f4
+      - id: k
+        type: f4
+      - id: wds_scan_type
+        type: u4
+        enum: wds_scan_type
+      - id: min_pos
+        type: u4
+      - id: reserved_1
+        type: u4
+      - id: reserved_2
+        type: u4
+      - id: reserved_3
+        type: u4
+      - id: max_pos
+        type: u4
+      - id: reserved_4
+        size: 4 * 3
+      - id: position
+        type: u4
+      - id: element
+        type: u4
+      - id: line
+        type: u4
+      - id: order # TODO is it????
+        type: u4
+      - id: offset_1
+        type: s4
+      - id: offset_2
+        type: s4
+      - id: counter_setting
+        type: counter_setting
+  
+  img_wds_spect_setups:
+    seq:
+      - id: wds_img_spect_setup_table
+        type: img_wds_spect_setup
+        repeat: expr
+        repeat-expr: 5
+        
+  qti_wds_measurement_setups:
+    seq:
+      - id: qti_setup_reserved_0
+        size: 20
+      - id: n_wds_measurements
+        type: u4
+      - id: qti_wds_measurement_setups
+        type: qti_wds_measurement_setup
+        repeat: expr
+        repeat-expr: n_wds_measurements
+        
+  
+  img_wds_spect_setup:
+    seq:
+      - id: rev_xtal_string
+        size: 4
+      - id: two_d
+        type: f4
+      - id: k
+        type: f4
+      - id: peak_position
+        type: u4
+      - id: element
+        type: u4
+      - id: line
+        type: u4
+      - id: order
+        type: u4  #TODO check if it is true
+      - id: counter_setting
+        type: counter_setting
+      - id: padding_0
+        size: 12
+  
+  qti_eds_measurement_setup:
+    seq:
+      - id: reserved_0
+        type: u4
+      - id: element
+        type: u4
+      - id: line
+        type: u4
+      - id: reserved_1
+        size: 12
+      
+  
+  qti_wds_measurement_setup:
+    seq:
+      # TODO Where is line order?
+      - id: element
+        type: u4
+      - id: line
+        type: u4
+      - id: spect_number
+        type: u4
+      - id: rev_xtal_name
+        type: s4
+      - id: not_re_flag_0
+        type: f4
+      - id: not_re_flag_1
+        type: f4
+      - id: calibration_file
+        type: c_sharp_string
+      - id: reserved_0  # Is order in this?
+        size: 12
+      - id: peak_position
+        type: u4
+      - id: peak_time
+        type: f4
+      - id: offset_bkgd_1
+        type: s4
+      - id: offset_bkgd_2
+        type: s4
+      - id: slope
+        type: f4
+      - id: bkgd_time
+        type: f4
+      - id: counter_setting
+        type: counter_setting
+      - id: one_div_sqrt_n
+        type: f4
+      - id: reserved_1
+        size: 12
+      - id: background_type
+        type: u4
+        enum: background_type
+      - id: reserved_2
+        size: 180
+      - id: subcounting_flag
+        type: u4
+        enum: subcounting_mode
+      - id: reserved_3
+        size: 156
+      - id: reserved_v4
+        size: 4
+        if: _root.sxf_header.sxf_version >= 4
+
+
 enums:
   file_type:
     1: wds_setup
@@ -1517,3 +1522,4 @@ enums:
     0: full
     1: relative
     2: absolute
+    
