@@ -37,7 +37,8 @@ kaitai_struct parser to read binary electron microprobe data files produced with
 - [x] add language agnostic instancies for some attributes which can be prepared in language-agnostic way in kaitai struct
 - [ ] add doc strings to explain further some halfly-parsed data
 - [ ] sanitize and stabilize the attribute names, so that third part software could use and do efortless drop-in updates
-- [x] could huge data array binary strings subdivided into smaller binary strings representing a single run (in multi-run wds) / image (in mosaiccing, or multi-run mapping)?
+- [x] make huge data array binary strings subdivided into smaller binary strings representing a single image (frames in mosaiccing, or multi-acquisition mapping);
+      return s list of binary strings (a string per frame)
 
 ### Limitations
 
