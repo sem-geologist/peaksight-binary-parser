@@ -475,9 +475,9 @@ types:
         type: f4
       - id: reserved_0
         size: 4
-      - id: hv
+      - id: hv_set
         type: f4
-      - id: current
+      - id: current_set
         type: f4
       - id: peak_pos
         type: u4
@@ -514,9 +514,9 @@ types:
         enum: signal_type
       - id: padding_0
         size: 24
-      - id: hv
+      - id: hv_set
         type: f4
-      - id: current
+      - id: current_set
         type: f4
       - id: padding_1
         size: 28
@@ -661,8 +661,12 @@ types:
         size: 4
       - id: total_size
         type: u4
-      - id: data_list
-        size: total_size
+      - id: data
+        size: data_size
+        type: calib_item
+        repeat: expr
+        repeat-expr: total_size / data_size
+        
       - id: calib_peak_time
         type: f4
       - id: calib_bkgd_time
@@ -694,6 +698,40 @@ types:
         type: quanti_wds_scan
         repeat: expr
         repeat-expr: n_calib_points
+
+  calib_item:
+    seq:
+      - id: version
+        type: u4
+      - id: beam_current
+        type: f4
+      - id: peak_cps
+        type: f4
+      - id: peak_time
+        type: f4
+      - id: bkgd_inter_cps
+        type: f4
+      - id: bkgd_1_cps
+        type: f4
+      - id: bkgd_2_cps
+        type: f4
+      - id: enabled
+        type: u4
+        doc: use in calculations
+      - id: peak_raw_cts
+        type: s4
+      - id: bkgd_1_raw_cts
+        type: s4
+      - id: bkgd_2_raw_cts
+        type: s4
+      - id: reserved_1
+        type: s4
+      - id: reserved_2
+        type: s4
+      - id: reserved_3
+        type: s4
+      - id: reserved_4
+        size-eos: true
 
   qti_data:
     params:
@@ -759,7 +797,7 @@ types:
         size: 36
       - id: n_of_embedded_wds
         type: u4
-      - id: pk_area_wds_spetras
+      - id: pk_area_wds_spectras
         type: quanti_wds_scan
         repeat: expr
         repeat-expr: n_of_embedded_wds
@@ -989,23 +1027,6 @@ types:
       - id: padding_v11
         size: 8
         if: version >= 11
-
-  image_data:
-    seq:
-      - id: n_accumulation
-        type: u4
-      - id: not_re_flag_0
-        type: u4
-      - id: data_size
-        type: u4
-      - id: not_re_flag_1
-        type: u4
-      - id: not_re_flag_2
-        type: u4
-      - id: not_re_flag_3
-        type: f4
-      - id: data
-        size: data_size - 12
 
   dts_img_sec_footer:
     seq:
@@ -1541,4 +1562,3 @@ enums:
     0: full
     1: relative
     2: absolute
-    
