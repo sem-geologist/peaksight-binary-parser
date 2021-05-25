@@ -52,7 +52,6 @@ seq:
         'file_type::overlap_table': overlap_corrections
 
 types:
-
   sxf_head:
     seq:
       - id: file_type
@@ -137,12 +136,12 @@ types:
       in case of points in grid or line, main and footer parts are arrayed
       separately.
     seq:
-      - id: dts_header
+      - id: dataset_header
         type: dataset_header
-      - id: dts_main
-        type: data_common(dts_header.n_of_points)
+      - id: dataset_items
+        type: dataset_item(dataset_header.n_of_points)
         repeat: expr
-        repeat-expr: dts_header.n_of_elements
+        repeat-expr: dataset_header.n_of_elements
       - id: comment
         type: c_sharp_string
       - id: reserved_0
@@ -175,30 +174,30 @@ types:
         size: 12
       - id: reserved_v18
         size: 4
-        if: dts_header.version >= 0x12
-      - id: footer_type
+        if: dataset_header.version >= 0x12
+      - id: dts_extras_type
         type: u4
-        enum: dts_footer_type
-      - id: dts_footer
+        enum: dataset_extras_type
+      - id: dataset_extras
         type:
-          switch-on: footer_type
+          switch-on: dts_extras_type
           cases:
-            'dts_footer_type::img_sec_footer': dts_img_sec_footer
-            'dts_footer_type::wds_and_cal_footer': dts_wds_calib_footer
-            'dts_footer_type::qti_v5_footer': dts_qti_footer(footer_type)
-            'dts_footer_type::qti_v6_footer': dts_qti_footer(footer_type)
+            'dataset_extras_type::img_sec_footer': dts_img_sec_footer
+            'dataset_extras_type::wds_and_cal_footer': dts_wds_calib_footer
+            'dataset_extras_type::qti_v5_footer': dts_qti_footer(dts_extras_type)
+            'dataset_extras_type::qti_v6_footer': dts_qti_footer(dts_extras_type)
   
   dts_qti_footer:
     params:
-      - id: footer_type
+      - id: dts_extras_type
         type: u4
-        enum: dts_footer_type
+        enum: dataset_extras_type
     seq:
       - id: reserved_0
         size: 4
       - id: n_space_time
         type: u4
-      - id: datetime_and_pos
+      - id: item_timestamps_and_positions
         type: space_time
         repeat: expr
         repeat-expr: n_space_time
@@ -224,10 +223,10 @@ types:
         size: 12
       - id: reserved_4
         size: 4
-        if: footer_type == dts_footer_type::qti_v6_footer
+        if: dts_extras_type == dataset_extras_type::qti_v6_footer
       - id: mac_table
         type: embedded_mac_table
-        if: footer_type == dts_footer_type::qti_v6_footer
+        if: dts_extras_type == dataset_extras_type::qti_v6_footer
   
   stochiometry_info:
     seq:
@@ -410,23 +409,23 @@ types:
       is_mosaic:
         value: n_of_tiles > 1
 
-  data_common:
+  dataset_item:
     params:
       - id: n_points
         type: u4
     seq:
       - id: version
         type: u4
-      - id: element_res_src
+      - id: signal_type
         type: u4
-        enum: res_elem_src
+        enum: signal_source
       - id: signal_header
         size: 68
         type:
-          switch-on: element_res_src
+          switch-on: signal_type
           cases:
-            'res_elem_src::video': video_signal_header
-            'res_elem_src::camera': empty_signal_header
+            'signal_source::video': video_signal_header
+            'signal_source::camera': empty_signal_header
             _: xray_signal_header
       - id: not_re_flag
         type: u4
@@ -442,10 +441,10 @@ types:
         type:
           switch-on: _root.sxf_header.file_type
           cases:
-            'file_type::image_mapping_results': image_section_data
-            'file_type::wds_results': wds_scan_data
-            'file_type::quanti_results': qti_data(n_points)
-            'file_type::calibration_results': calib_data
+            'file_type::image_mapping_results': image_profile_signal(n_points)
+            'file_type::wds_results': wds_scan_signal
+            'file_type::quanti_results': wds_qti_signal(n_points)
+            'file_type::calibration_results': calib_signal
         
   xray_signal_header:
     seq:
@@ -465,10 +464,8 @@ types:
         type: u4
       - id: spect_no
         type: u4
-      - id: xtal4
-        type: str
+      - id: rev_xtal_str4
         size: 4
-        encoding: ASCII
       - id: two_d
         type: f4
       - id: k
@@ -509,9 +506,9 @@ types:
     seq:
       - id: channel
         type: u4
-      - id: signal
+      - id: video_signal_type
         type: u4
-        enum: signal_type
+        enum: video_signal_type
       - id: padding_0
         size: 24
       - id: hv_set
@@ -521,7 +518,10 @@ types:
       - id: padding_1
         size: 28
         
-  image_section_data:
+  image_profile_signal:
+    params:
+      - id: n_pixels
+        type: u4
     seq:
       - id: struct_v
         type: u4
@@ -608,10 +608,15 @@ types:
         size: 8
         
     instances:
+      array_data_size:
+        value: |
+          data_size - (
+            (dts_t == dataset_type::line_stage) or
+            (dts_t == dataset_type::line_beam) ? 0: 12)
       frame_size:
-        value: (img_pixel_dtype.to_i == 0 ? 1 : 4) * _parent._parent.dts_header.n_of_points
+        value: (img_pixel_dtype.to_i == 0 ? 1 : 4) * n_pixels
       n_of_frames:
-        value: data_size / frame_size
+        value: array_data_size / frame_size
   
   color_bar_ticks:
     seq:
@@ -651,7 +656,7 @@ types:
       - id: reserved_0
         size: 40
 
-  calib_data:
+  calib_signal:
     seq:
       - id: version
         type: u4
@@ -733,9 +738,9 @@ types:
       - id: reserved_4
         size-eos: true
 
-  qti_data:
+  wds_qti_signal:
     params:
-      - id: n_steps
+      - id: n_points
         type: u4
     seq:
       - id: version
@@ -748,7 +753,7 @@ types:
       - id: data
         type: qti_data_item
         repeat: expr
-        repeat-expr: n_steps
+        repeat-expr: n_points
       - id: reserved_0
         type: u4
       - id: standard_name
@@ -819,7 +824,7 @@ types:
       - id: oxy_state
         type: f4
         
-  wds_scan_data:
+  wds_scan_signal:
     seq:
       - id: version
         type: u4
@@ -1149,7 +1154,7 @@ types:
         type: u4
       - id: spect_nr
         type: u4
-      - id: rev_xtal_name
+      - id: rev_xtal_str4
         size: 4
       - id: dwell_time
         type: f4
@@ -1309,7 +1314,7 @@ types:
   
   wds_scan_spect_setup:
     seq:
-      - id: rev_xtal_string
+      - id: rev_xtal_str4
         size: 4
       - id: two_d
         type: f4
@@ -1366,7 +1371,7 @@ types:
   
   img_wds_spect_setup:
     seq:
-      - id: rev_xtal_string
+      - id: rev_xtal_str4
         size: 4
       - id: two_d
         type: f4
@@ -1406,8 +1411,8 @@ types:
         type: u4
       - id: spect_number
         type: u4
-      - id: rev_xtal_name
-        type: s4
+      - id: rev_xtal_str4
+        size: 4
       - id: not_re_flag_0
         type: f4
       - id: not_re_flag_1
@@ -1448,7 +1453,6 @@ types:
         size: 4
         if: _root.sxf_header.sxf_version >= 4
 
-
 enums:
   file_type:
     1: wds_setup
@@ -1476,7 +1480,7 @@ enums:
     6: polygon_masked_beam_raster
     7: free_points
     
-  res_elem_src:
+  signal_source:
     # exposed in GUI as drop-down menu, thanks!
     0: undefined
     1: wds
@@ -1506,7 +1510,7 @@ enums:
     1: differential
     2: differential_auto
     
-  signal_type:
+  video_signal_type:
     0: se
     1: fara
     2: bse  # 0x02 as BSE is on SX100, but not on SXFive
@@ -1527,7 +1531,7 @@ enums:
     7: float32
     8: rgbx
     
-  dts_footer_type:
+  dataset_extras_type:
     #1: ?
     2: wds_and_cal_footer # why it is the same for so different stuff?
     #3:?
