@@ -33,7 +33,7 @@ kaitai_struct parser to read binary electron microprobe data files produced with
   - [x] impSet
   - [x] wdsSet
   - [x] ovl
-- [ ] code deduplication and optimization (There needs to be achieved compromise. Duplicate structures can allow the resulting tree to be more flat (which is good when using in target language), where deduplication causes more deeper data tree, but is easier to maintain (which is good for maintaining the parser)) 
+- [x] code deduplication and optimization (There needs to be achieved compromise. Duplicate structures can allow the resulting tree to be more flat (which is good when using in target language), where deduplication causes more deeper data tree, but is easier to maintain (which is good for maintaining the parser)) 
 - [x] add language agnostic instancies for some attributes which can be prepared in language-agnostic way in kaitai struct
 - [ ] add doc strings to explain further some halfly-parsed data
 - [x] sanitize and stabilize the attribute names, so that third part software could use and do efortless drop-in updates
