@@ -164,7 +164,15 @@ types:
         size: 4
         if: template_flag == 1
       - id: reserved_1
-        size: 120
+        size: 104
+      - id: image_frames
+        type: u4
+        doc: |
+          somehow images do not use n_accumulated, but this attribute;
+          and profiles ignore this field (for profile it is filled 
+          with value of previous item if it was img)
+      - id: reserved_2
+        size: 12
       - id: reserved_v18
         size: 4
         if: dts_header.version >= 0x12
@@ -386,7 +394,7 @@ types:
       - id: focus_freq
         type: u4
       - id: load_setup_everyth_nth
-        type: u4
+        type: s4
       - id: not_re_flag4  # TODO
         type: s4
       - id: setup_file_name
@@ -399,6 +407,8 @@ types:
         value: n_of_steps * n_of_lines
       n_of_tiles:
         value: mosaic_cols * mosaic_rows
+      is_mosaic:
+        value: n_of_tiles > 1
 
   data_common:
     params:
@@ -566,10 +576,14 @@ types:
           (dts_t != dataset_type::line_stage) and
           (dts_t != dataset_type::line_beam)
       - id: data
-        size: |
-          (dts_t != dataset_type::line_stage) and
-          (dts_t != dataset_type::line_beam) ?
-            data_size - 12 : data_size
+        size: frame_size
+        repeat: expr
+        repeat-expr: n_of_frames
+        doc: |
+          list of arrays, where if mosaic: every item is bytestring from
+          one tile; else if multi-frame picture (multiple-overscan) then
+          average or sum (depending what set in GUI) of all frames, indexes
+          1 to end subframes.
       - id: reserved_0 # Somethere here begins LUT and color bar description
         size: 56
       - id: lut_name
@@ -592,7 +606,12 @@ types:
         type: f4
       - id: reserved_2
         size: 8
-  
+        
+    instances:
+      frame_size:
+        value: (img_pixel_dtype.to_i == 0 ? 1 : 4) * _parent._parent.dts_header.n_of_points
+      n_of_frames:
+        value: data_size / frame_size
   
   color_bar_ticks:
     seq:
