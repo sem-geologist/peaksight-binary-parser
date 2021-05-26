@@ -12,7 +12,8 @@ meta:
     - impSet
     - ovl
   endian: le
-  license: LGPL-3.0-or-later
+  encoding: CP1252
+  license: LGPL-2.1-or-later
   ks-version: 0.9
   
 doc: |
@@ -43,8 +44,8 @@ seq:
       cases:
         'file_type::wds_setup': wds_setup
         'file_type::image_mapping_setup': img_setup
-        'file_type::calibration_setup': qti_cal_setup
-        'file_type::quanti_setup': qti_cal_setup
+        'file_type::calibration_setup': cal_setup
+        'file_type::quanti_setup': qti_setup
         'file_type::wds_results': sxf_main
         'file_type::image_mapping_results': sxf_main
         'file_type::calibration_results': sxf_main
@@ -81,16 +82,31 @@ types:
 
   file_modification:
     seq:
-      - id: datetime
+      - id: timestamp
         type: u8
         doc: "MS FILETIME type"
-      - id: change
-        type: c_sharp_string
-        doc: |
-          change is subdivided more by tabulation or special chars,
-          proper subdivision should be implemented in target language as kaitai
-          is good binary parser.
-
+      - id: len_of_bytestring
+        type: u4
+      - id: attributes
+        type: modification_attributes
+        size: len_of_bytestring
+      
+        
+  modification_attributes:
+    seq:
+      - id: action
+        type: str
+        terminator: 0x03
+      - id: description
+        -orig-id: Item
+        type: str
+        terminator: 0x03
+        eos-error: false
+      - id: user_comment
+        type: str
+        size-eos: true
+        
+        
   c_sharp_string:
     seq:
       - id: str_len
@@ -98,7 +114,6 @@ types:
       - id: text
         type: str
         size: str_len
-        encoding: CP1252
 
   sxf_main:
     seq:
@@ -201,8 +216,21 @@ types:
         type: space_time
         repeat: expr
         repeat-expr: n_space_time
-      - id: reserved_1
+      - id: quantification_options
+        type: quanti_options
+      - id: reserved_3
+        size: 12
+      - id: reserved_4
         size: 4
+        if: dts_extras_type == dataset_extras_type::qti_v6_footer
+      - id: mac_table
+        type: embedded_mac_table
+        if: dts_extras_type == dataset_extras_type::qti_v6_footer
+  
+  quanti_options:
+    seq:
+      - id: version
+        type: u4
       - id: qti_analysis_mode
         type: u4
         enum: analysis_mode
@@ -216,17 +244,12 @@ types:
             'analysis_mode::with_matrix_definition': matrix_definition_info
             'analysis_mode::stoch_and_difference': stoch_and_difference_info
       - id: reserved_2
-        size: 16
+        size: 12
+      - id: matrix_correction_model
+        type: u4
+        enum: matrix_correction_type
       - id: geo_species_name
         type: c_sharp_string
-      - id: reserved_3
-        size: 12
-      - id: reserved_4
-        size: 4
-        if: dts_extras_type == dataset_extras_type::qti_v6_footer
-      - id: mac_table
-        type: embedded_mac_table
-        if: dts_extras_type == dataset_extras_type::qti_v6_footer
   
   stochiometry_info:
     seq:
@@ -425,7 +448,7 @@ types:
           switch-on: signal_type
           cases:
             'signal_source::video': video_signal_header
-            'signal_source::camera': empty_signal_header
+            'signal_source::im_camera': empty_signal_header
             _: xray_signal_header
       - id: not_re_flag
         type: u4
@@ -1161,6 +1184,7 @@ types:
         if: version >= 3
       - id: reserved_0
         size: 4
+        if: version >= 3
   
   img_setup:
     doc: this is roughly RE and far from complete
@@ -1174,7 +1198,7 @@ types:
         repeat: expr
         repeat-expr: n_sub_setups
   
-  qti_cal_setup:
+  cal_setup:
     doc: this is a rought reverse engineared and far from complete
     seq:
       - id: reserved_0
@@ -1185,29 +1209,56 @@ types:
         type: sub_setup
         repeat: expr
         repeat-expr: n_sub_setups
-      - id: reserved_1
-        size: 28
-      - id: qti_analysis_mode
+      - id: calibration_options
+        type: cal_options
+      
+  cal_options:
+    seq:
+      - id: reserved
+        size: 24
+      - id: standard_id
+        -orig-id: LabelID
+        doc: 'id in sx.mdb labels table'
         type: u4
-        enum: analysis_mode
-      - id: analysis_mode_info
-        type:
-          switch-on: qti_analysis_mode
-          cases:
-            'analysis_mode::by_stochiometry': stochiometry_info
-            'analysis_mode::by_difference': by_difference_info
-            'analysis_mode::matrix_def_and_stoch': matrix_definition_and_stoch_info
-            'analysis_mode::with_matrix_definition': matrix_definition_info
-            'analysis_mode::stoch_and_difference': stoch_and_difference_info
+      - id: standard_name
+        -orig-id: Label
+        type: c_sharp_string
+      
+  qti_setup:
+    doc: this is a rought reverse engineared and far from complete
+    seq:
+      - id: version
+        type: u4
+      - id: count_sync
+        type: u4
+        doc: '0 == async; 1 == sync'
+      - id: reserved_0
+        size: 4
+      - id: n_sub_setups
+        type: u4
+      - id: subsetups
+        type: sub_setup
+        repeat: expr
+        repeat-expr: n_sub_setups
+      - id: reserved_1
+        type: u4
+      - id: fixed_order
+        type: u4
+        doc: |
+          0 == not fixed; (0xffffffff or 0x01) == fixed
       - id: reserved_2
         size: 16
-      - id: geo_species_name
-        type: c_sharp_string
-      - id: reserved_3
-        size: 4
+      - id: quantification_options
+        type: quanti_options
+      - id: same_line_multi_spect_handling
+        type: u4
+        enum: m_spect_same_line_handling
       - id: reserved_v20
+        doc: |
+          first 13 * 4 bytes looks as 13 float8 type values
+          which use is not known
         size: 140
-        if: _root.sxf_header.sxf_version >= 5
+        if: _root.sxf_header.sxf_version >= 4
 
   wds_setup:
     doc: this is roughly reverse engineared and far from complete
@@ -1399,7 +1450,11 @@ types:
       - id: line
         type: u4
       - id: reserved_1
-        size: 12
+        type: u4
+      - id: calibration_setup_file
+        type: c_sharp_string
+      - id: reserved_2
+        type: u4
       
   
   qti_wds_measurement_setup:
@@ -1482,6 +1537,8 @@ enums:
     
   signal_source:
     # exposed in GUI as drop-down menu, thanks!
+    # in GUI this is prepended with "RES_ELT_SOURCE_"
+    # which there is omitted for clarity
     0: undefined
     1: wds
     2: eds
@@ -1490,20 +1547,20 @@ enums:
     5: qti_diff
     6: qti_stoch
     7: qti_matrix
-    8: imove
-    9: imphcl
+    8: im_ove
+    9: im_phcl
     10: im_phid
-    11: imqti_wds_bkgd_meas
-    12: imqti_wds_bkgd_computed
-    13: imqti_wt
-    14: imqti_at
-    15: imqti_sum
-    16: imqti_age
-    17: imqti_oxy
-    18: imxon_video
-    19: camera
+    11: im_qti_wds_bkgd_meas
+    12: im_qti_wds_bkgd_computed
+    13: im_qti_wt
+    14: im_qti_at
+    15: im_qti_sum
+    16: im_qti_age
+    17: im_qti_oxy
+    18: im_xon_video
+    19: im_camera
     20: wds_computed
-    21: eds_bkgd
+    21: im_qti_eds_back_meas
   
   pha_mode:
     0: integral
@@ -1566,3 +1623,11 @@ enums:
     0: full
     1: relative
     2: absolute
+    
+  matrix_correction_type:
+    0: pap
+    1: xphi
+  
+  m_spect_same_line_handling:
+    0: average
+    1: sum
