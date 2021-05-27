@@ -79,6 +79,7 @@ types:
       - id: reserved_v5
         type: f8
         if: sxf_version >= 5
+    -webide-representation: '{file_type}, v{sxf_version:dec}, n_mod:{n_file_modifications:dec}'
 
   file_modification:
     seq:
@@ -114,6 +115,7 @@ types:
       - id: text
         type: str
         size: str_len
+    -webide-representation: '{text:str}'
 
   sxf_main:
     seq:
@@ -144,6 +146,7 @@ types:
       - id: not_re_global_options_v4
         size: 12
         if: _root.sxf_header.sxf_version >= 4
+    -webide-representation: 'v{version:dec}, {n_of_datasets:dec} datasets'
         
   dataset:
     doc: |
@@ -201,7 +204,8 @@ types:
             'dataset_extras_type::wds_and_cal_footer': dts_wds_calib_footer
             'dataset_extras_type::qti_v5_footer': dts_qti_footer(dts_extras_type)
             'dataset_extras_type::qti_v6_footer': dts_qti_footer(dts_extras_type)
-  
+    -webide-representation: '{comment.text}'
+    
   dts_qti_footer:
     params:
       - id: dts_extras_type
@@ -355,8 +359,14 @@ types:
           n_space_time : 1
       - id: reserved_1
         size:  4
-      - id: reserved_wds_ending
-        size: 48
+      - id: reserved_wds_ending_1
+        size: 4
+        if: _root.sxf_header.file_type.to_i != 8
+      - id: dataset_is_selected
+        type: u4
+        if: _root.sxf_header.file_type.to_i != 8
+      - id: reserved_wds_ending_2
+        size: 40
         if: _root.sxf_header.file_type.to_i != 8
       - id: standard
         type: standard_composition_table
@@ -423,6 +433,7 @@ types:
         type: c_sharp_string
       - id: n_of_elements
         type: u4
+    -webide-representation: 'v{version:dec}, [x:{stage_x:dec} y:{stage_y:dec}]'
     
     instances:
       n_of_points:
@@ -468,6 +479,7 @@ types:
             'file_type::wds_results': wds_scan_signal
             'file_type::quanti_results': wds_qti_signal(n_points)
             'file_type::calibration_results': calib_signal
+    -webide-representation: '{signal_type}'
         
   xray_signal_header:
     seq:
@@ -487,8 +499,9 @@ types:
         type: u4
       - id: spect_no
         type: u4
-      - id: rev_xtal_str4
+      - id: xtal
         size: 4
+        type: xtal_t
       - id: two_d
         type: f4
       - id: k
@@ -503,6 +516,24 @@ types:
         type: u4
       - id: counter_setting
         type: counter_setting
+  
+  xtal_t:
+    seq:
+      - id: first_byte
+        type: u1
+      
+    instances:
+      rev_name:
+        size-eos: true
+        pos: first_byte > 0 ? 0 : 1
+        type: str
+      full_name:
+        value: rev_name.reverse
+      family_name:
+        value: rev_name.substring(0,3).reverse
+        
+    -webide-representation: '{full_name:str}'
+  
   
   counter_setting:
     seq:
@@ -519,6 +550,7 @@ types:
       - id: mode
         type: u4
         enum: pha_mode
+    -webide-representation: 'bias:{bias:dec} V, gain:{gain:dec}, dt:{dtime:dec}µs, ...'
         
   empty_signal_header:
     seq:
@@ -1177,8 +1209,9 @@ types:
         type: u4
       - id: spect_nr
         type: u4
-      - id: rev_xtal_str4
+      - id: xtal
         size: 4
+        type: xtal_t
       - id: dwell_time
         type: f4
         if: version >= 3
@@ -1365,8 +1398,9 @@ types:
   
   wds_scan_spect_setup:
     seq:
-      - id: rev_xtal_str4
+      - id: xtal
         size: 4
+        type: xtal_t
       - id: two_d
         type: f4
       - id: k
@@ -1422,8 +1456,9 @@ types:
   
   img_wds_spect_setup:
     seq:
-      - id: rev_xtal_str4
+      - id: xtal
         size: 4
+        type: xtal_t
       - id: two_d
         type: f4
       - id: k
@@ -1466,8 +1501,9 @@ types:
         type: u4
       - id: spect_number
         type: u4
-      - id: rev_xtal_str4
+      - id: xtal
         size: 4
+        type: xtal_t
       - id: not_re_flag_0
         type: f4
       - id: not_re_flag_1
