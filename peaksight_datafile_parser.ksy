@@ -525,7 +525,7 @@ types:
     instances:
       rev_name:
         size-eos: true
-        pos: first_byte > 0 ? 0 : 1
+        pos: 'first_byte > 0 ? 0 : 1'
         type: str
       full_name:
         value: rev_name.reverse
@@ -669,7 +669,7 @@ types:
             (dts_t == dataset_type::line_stage) or
             (dts_t == dataset_type::line_beam) ? 0: 12)
       frame_size:
-        value: (img_pixel_dtype.to_i == 0 ? 1 : 4) * n_pixels
+        value: '(img_pixel_dtype.to_i == 0 ? 1 : 4) * n_pixels'
       n_of_frames:
         value: array_data_size / frame_size
   
@@ -1550,7 +1550,7 @@ types:
         doc: '100-nanoseconds since Jan 1 1601'
     instances:
       unix_timestamp:
-        value: ms_filetime / 10000. - 11644473600000
+        value: ms_filetime / 10000000. - 11644473600
         doc: 'seconds since Jan 1 1970'
         
 enums:
