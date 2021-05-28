@@ -44,7 +44,7 @@ kaitai_struct parser to read binary electron microprobe data files produced with
 
 While kaitai struct is awesome language-agnostic binary parsing framework, the language-agnosticity produces some limitations. Some data types are not universal between different languages, or built-in type(s) in some target languages has some not-wished side effects.
 - data arrays for images and WDS scans are not parsed with correct datatype but returned as binary string. i.e. compilation to python (as one of main target languages) code does not use numpy arrays, the kaitai would convert numbers to native python number types and array would be returned as list, which in case of images would consume a lot of memory (as every number is an object in python with its attributes and methods).
-   - solution in python: In python the bytestring can be used as buffer type. This allows to save memory as no array duplication is needed, but values in such array can't be modified without making a copy. 
+   - solution in python: The `numpy` can use bytestring directly as buffer. This allows to save memory as no array duplication is needed, but values in such array can't be modified without making a copy. 
 - c# strings (in this kaitai code declared as `c_sharp_string`) has prepending 32 bit integer with lengh of the string, kaitai needs to read that before reading the string, and thus textual attributes contain one additional level. i.e. accessing comment of loaded parsed file would look like this: 
 
   ```python
