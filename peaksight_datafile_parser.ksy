@@ -1117,8 +1117,7 @@ types:
       - id: version
         type: u4
       - id: datetime
-        type: u8
-        doc: 'MS FILETIME'
+        type: datetime_t
       - id: x_axis
         type: f4
       - id: y_axis
@@ -1543,7 +1542,17 @@ types:
       - id: reserved_v4
         size: 4
         if: _root.sxf_header.sxf_version >= 4
-
+        
+  datetime_t:
+    seq:
+      - id: ms_filetime
+        type: u8
+        doc: '100-nanoseconds since Jan 1 1601'
+    instances:
+      unix_timestamp:
+        value: ms_filetime / 10000. - 11644473600000
+        doc: 'seconds since Jan 1 1970'
+        
 enums:
   file_type:
     1: wds_setup
