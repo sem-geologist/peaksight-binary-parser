@@ -44,6 +44,7 @@ kaitai_struct parser to read binary electron microprobe data files produced with
 
 While kaitai struct is awesome language-agnostic binary parsing framework, the language-agnosticity produces some limitations. Some data types are not universal between different languages, or built-in type(s) in some target languages has some not-wished side effects.
 - data arrays for images and WDS scans are not parsed with correct datatype but returned as binary string. i.e. compilation to python (as one of main target languages) code does not use numpy arrays, the kaitai would convert numbers to native python number types and array would be returned as list, which in case of images would consume a lot of memory (as every number is an object in python with its attributes and methods).
+   - solution in python: In python the bytestring can be used as buffer type. This allows to save memory as no array duplication is needed, but values in such array can't be modified without making a copy. 
 - c# strings (in this kaitai code declared as `c_sharp_string`) has prepending 32 bit integer with lengh of the string, kaitai needs to read that before reading the string, and thus textual attributes contain one additional level. i.e. accessing comment of loaded parsed file would look like this: 
 
   ```python
@@ -52,4 +53,5 @@ While kaitai struct is awesome language-agnostic binary parsing framework, the l
    print(loaded_file.sxf_header.comment.text)
   ```
   we need to use that additional `.text` argument (or a getter if used in other over-baby-sitting language compilation than python), as `.comment` is not a string type, but special `c_sharp_string` type with two attributes (or two private attributes and coresponding getters): `lenght` and `text`
-- Some types does not has direct representation in all target languages. i.e. `FILETIME` or more precise `MS FILETIME`, which is parsed as 64-bit integer in the parser. It is intentended then either be cast into datetime(-like) type with built-in casting (i.e. C#) or use some custom function to convert it into standard unix timestamp.
+- Some types do not have a direct representation in all target languages. i.e. `FILETIME` or more precise `MS FILETIME`, which is parsed as 64-bit integer in the parser. It is intentended then either be cast into datetime(-like) type with built-in casting (i.e. C#) or use some custom function to convert it into standard unix timestamp.
+  - Solution: handling of unixtime stamp is more common built-in in languages other than C#. MS FILETIME is recalculated to UNIX TIMESTAMP as instance in ksy.
