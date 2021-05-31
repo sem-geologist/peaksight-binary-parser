@@ -36,11 +36,11 @@ doc: |
   Lesser General Public License for more details.
 
 seq:
-  - id: sxf_header
-    type: sxf_head
-  - id: sxf_main
+  - id: header
+    type: sxf_header
+  - id: content
     type:
-      switch-on: sxf_header.file_type
+      switch-on: header.file_type
       cases:
         'file_type::wds_setup': wds_setup
         'file_type::image_mapping_setup': img_setup
@@ -53,7 +53,7 @@ seq:
         'file_type::overlap_table': overlap_corrections
 
 types:
-  sxf_head:
+  sxf_header:
     seq:
       - id: file_type
         type: u1
@@ -84,8 +84,7 @@ types:
   file_modification:
     seq:
       - id: timestamp
-        type: u8
-        doc: "MS FILETIME type"
+        type: datetime_t
       - id: len_of_bytestring
         type: u4
       - id: attributes
@@ -145,7 +144,7 @@ types:
         size: 216
       - id: not_re_global_options_v4
         size: 12
-        if: _root.sxf_header.sxf_version >= 4
+        if: _root.header.sxf_version >= 4
     -webide-representation: 'v{version:dec}, {n_of_datasets:dec} datasets'
         
   dataset:
@@ -156,7 +155,7 @@ types:
     seq:
       - id: dataset_header
         type: dataset_header
-      - id: dataset_items
+      - id: items
         type: dataset_item(dataset_header.n_of_points)
         repeat: expr
         repeat-expr: dataset_header.n_of_elements
@@ -260,7 +259,7 @@ types:
       - id: reserved_0
         size: 4
       - id: element_for_stochiometry
-        type: u4
+        type: element_t
       - id: n_changed_oxy_states
         type: u4
       - id: oxy_state_changes
@@ -271,7 +270,7 @@ types:
   by_difference_info:
     seq:
       - id: element_by_difference
-        type: u4
+        type: element_t
   
   matrix_definition_info:
     seq:
@@ -290,7 +289,7 @@ types:
       - id: reserved_0
         size: 4
       - id: element_for_stochiometry
-        type: u4
+        type: element_t
       - id: n_changed_oxy_states
         type: u4
       - id: oxy_state_changes
@@ -311,7 +310,7 @@ types:
       - id: reserved_0
         size: 4
       - id: element_for_stochiometry
-        type: u4
+        type: element_t
       - id: n_changed_oxy_states
         type: u4
       - id: oxy_state_changes
@@ -319,7 +318,7 @@ types:
         repeat: expr
         repeat-expr: n_changed_oxy_states
       - id: element_by_difference
-        type: u4
+        type: element_t
         
   embedded_mac_table:
     seq:
@@ -338,8 +337,9 @@ types:
         type: u1
       - id: measured_element
         type: u1
-      - id: xray_line
+      - id: line
         type: u2
+        enum: xray_line
       - id: value
         type: f4
   
@@ -347,30 +347,30 @@ types:
     seq:
       - id: reserved_0
         size: 4
-        if: _root.sxf_header.file_type == file_type::calibration_results
+        if: _root.header.file_type == file_type::calibration_results
       - id: n_space_time
         type: u4
-        if: _root.sxf_header.file_type == file_type::calibration_results
+        if: _root.header.file_type == file_type::calibration_results
       - id: datetime_and_pos
         type: space_time
         repeat: expr
         repeat-expr: |
-          _root.sxf_header.file_type == file_type::calibration_results ?
+          _root.header.file_type == file_type::calibration_results ?
           n_space_time : 1
       - id: reserved_1
         size:  4
       - id: reserved_wds_ending_1
         size: 4
-        if: _root.sxf_header.file_type.to_i != 8
+        if: _root.header.file_type.to_i != 8
       - id: dataset_is_selected
         type: u4
-        if: _root.sxf_header.file_type.to_i != 8
+        if: _root.header.file_type.to_i != 8
       - id: reserved_wds_ending_2
         size: 40
-        if: _root.sxf_header.file_type.to_i != 8
+        if: _root.header.file_type.to_i != 8
       - id: standard
         type: standard_composition_table
-        if: _root.sxf_header.file_type.to_i == 8
+        if: _root.header.file_type.to_i == 8
 
   dataset_header:
     seq:
@@ -473,28 +473,21 @@ types:
         repeat-expr: n_of_reserved_1_blocks
       - id: signal
         type:
-          switch-on: _root.sxf_header.file_type
+          switch-on: _root.header.file_type
           cases:
             'file_type::image_mapping_results': image_profile_signal(n_points)
             'file_type::wds_results': wds_scan_signal
             'file_type::quanti_results': wds_qti_signal(n_points)
             'file_type::calibration_results': calib_signal
     -webide-representation: '{signal_type}'
-        
+     
   xray_signal_header:
     seq:
-      - id: atom_number
+      - id: element
+        type: element_t
+      - id: xray_line
         type: u4
-      - id: x_ray_line
-        type: u4
-        doc: |
-          Kβ, Kα = 1, 2
-          Lγ4, Lγ3, Lγ2, Lγ = 3, 4, 5, 6
-          Lβ9, Lβ10, Lβ7, Lβ2, Lβ6, Lβ3, Lβ4, Lβ = range(7, 15)
-          Lα, Lν, Ll = 15, 16, 17
-          Mγ, Mβ, Mα, Mζ, Mζ2 = 18, 19, 20, 21, 22
-          M1N2, M1N3, M2N1, M2N4, M2O4, M3N1, M3N4, M3O1, M3O4, M4O2 = range(23, 33)
-          sKα1, sKα2, sKα3, sKα4, sKα5, sKα6, sKβ1 = range(100, 107)
+        enum: xray_line
       - id: order
         type: u4
       - id: spect_no
@@ -516,6 +509,12 @@ types:
         type: u4
       - id: counter_setting
         type: counter_setting
+    
+    instances:
+      combi_string:
+        value: 'spect_no.to_s + ": " + xtal.full_name'
+    -webide-representation: '{combi_string:str}'
+    
   
   xtal_t:
     seq:
@@ -863,19 +862,19 @@ types:
         repeat-expr: n_of_embedded_wds
       - id: not_re_calib_block
         size: 8
-        if: _root.sxf_header.sxf_version > 3
+        if: _root.header.sxf_version > 3
       
   element_weight:
     seq:
       - id: element
-        type: u4
+        type: element_t
       - id: weight_fraction
         type: f4
         
   element_oxy_state:
     seq:
       - id: element
-        type: u4
+        type: element_t
       - id: oxy_state
         type: f4
         
@@ -983,17 +982,10 @@ types:
   annotated_lines:
     seq:
       - id: element
-        type: u4
+        type: element_t
       - id: line
         type: u4
-        doc: |
-          Kβ, Kα = 1, 2
-          Lγ4, Lγ3, Lγ2, Lγ = 3, 4, 5, 6
-          Lβ9, Lβ10, Lβ7, Lβ2, Lβ6, Lβ3, Lβ4, Lβ = range(7, 15)
-          Lα, Lν, Ll = 15, 16, 17
-          Mγ, Mβ, Mα, Mζ, Mζ2 = 18, 19, 20, 21, 22
-          M1N2, M1N3, M2N1, M2N4, M2O4, M3N1, M3N4, M3O1, M3O4, M4O2 = range(23, 33)
-          sKα1, sKα2, sKα3, sKα4, sKα5, sKα6, sKβ1 = range(100, 107)
+        enum: xray_line
       - id: order
         type: u4
       - id: reserverd1
@@ -1005,7 +997,7 @@ types:
     seq:
       - id: version
         type: u4
-      - id: fara_meas
+      - id: beam_current
         type: f4
       - id: peak_cps
         type: f4
@@ -1023,7 +1015,7 @@ types:
         type: f4
       - id: weight_fraction
         type: f4
-      - id: normalised_weight_f
+      - id: norm_weight_frac
         type: f4
       - id: atomic_fraction
         type: f4
@@ -1031,7 +1023,7 @@ types:
         type: f4
       - id: detection_limit
         type: f4
-      - id: standard_deviation
+      - id: std_dev
         type: f4
       - id: z
         type: f4
@@ -1185,13 +1177,15 @@ types:
       - id: version
         type: u4
       - id: element
-        type: u4
+        type: element_t
       - id: line
         type: u4
+        enum: xray_line
       - id: i_element
         type: u4
       - id: i_line
         type: u4
+        enum: xray_line
       - id: i_order
         type: u4
       - id: i_offset
@@ -1290,7 +1284,7 @@ types:
           first 13 * 4 bytes looks as 13 float8 type values
           which use is not known
         size: 140
-        if: _root.sxf_header.sxf_version >= 4
+        if: _root.header.sxf_version >= 4
 
   wds_setup:
     doc: this is roughly reverse engineared and far from complete
@@ -1368,15 +1362,15 @@ types:
         type: s4
         repeat: expr
         repeat-expr: |
-          _root.sxf_header.file_type.to_i > 1 ? 86 : 85
+          _root.header.file_type.to_i > 1 ? 86 : 85
       - id: n_eds_measurement_setups
         type: u4
-        if: _root.sxf_header.file_type.to_i > 1
+        if: _root.header.file_type.to_i > 1
       - id: eds_measurement_setups
         type: qti_eds_measurement_setup
         repeat: expr
         repeat-expr: n_eds_measurement_setups
-        if: _root.sxf_header.file_type.to_i > 1
+        if: _root.header.file_type.to_i > 1
       - id: default_eds_live_time
         type: f4
       - id: not_re_flag_5
@@ -1387,7 +1381,7 @@ types:
         size: 8
       - id: wds_measurement_struct_type
         type: u4
-        if: _root.sxf_header.file_type.to_i > 1
+        if: _root.header.file_type.to_i > 1
       - id: wds_img_spect_setups
         type: img_wds_spect_setups
         if: wds_measurement_struct_type == 3
@@ -1422,9 +1416,10 @@ types:
       - id: position
         type: u4
       - id: element
+        type: element_t
+      - id: xray_line
         type: u4
-      - id: line
-        type: u4
+        enum: xray_line
       - id: order # TODO is it????
         type: u4
       - id: offset_1
@@ -1465,9 +1460,10 @@ types:
       - id: peak_position
         type: u4
       - id: element
+        type: element_t
+      - id: xray_line
         type: u4
-      - id: line
-        type: u4
+        enum: xray_line
       - id: order
         type: u4  #TODO check if it is true
       - id: counter_setting
@@ -1480,9 +1476,10 @@ types:
       - id: reserved_0
         type: u4
       - id: element
+        type: element_t
+      - id: xray_line
         type: u4
-      - id: line
-        type: u4
+        enum: xray_line
       - id: reserved_1
         type: u4
       - id: calibration_setup_file
@@ -1495,9 +1492,10 @@ types:
     seq:
       # TODO Where is line order?
       - id: element
+        type: element_t
+      - id: xray_line
         type: u4
-      - id: line
-        type: u4
+        enum: xray_line
       - id: spect_number
         type: u4
       - id: xtal
@@ -1541,7 +1539,7 @@ types:
         size: 156
       - id: reserved_v4
         size: 4
-        if: _root.sxf_header.sxf_version >= 4
+        if: _root.header.sxf_version >= 4
         
   datetime_t:
     seq:
@@ -1552,7 +1550,12 @@ types:
       unix_timestamp:
         value: ms_filetime / 10000000. - 11644473600
         doc: 'seconds since Jan 1 1970'
-        
+  
+  element_t:
+    seq:
+      - id: atomic_number
+        type: u4
+  
 enums:
   file_type:
     1: wds_setup
@@ -1676,3 +1679,46 @@ enums:
   m_spect_same_line_handling:
     0: average
     1: sum
+    
+  xray_line:
+    1: kb
+    2: ka
+    3: lg4
+    4: lg3
+    5: lg2
+    6: lg1
+    7: lb9
+    8: lb10
+    9: lb7
+    10: lb2
+    11: lb6
+    12: lb3
+    13: lb4
+    14: lb
+    15: la
+    16: lv
+    17: ll
+    18: mg
+    19: mb
+    20: ma
+    21: mz
+    22: mz2
+    23: m1n2
+    24: m1n3
+    25: m2n1
+    26: m2n4
+    27: m2o4
+    28: m3n1
+    29: m3n4
+    30: m3o1
+    31: m3o4
+    32: m4o2
+    100: ska1
+    101: ska2
+    102: ska3
+    103: ska4
+    104: ska5
+    105: ska6
+    106: skb1
+    
+    

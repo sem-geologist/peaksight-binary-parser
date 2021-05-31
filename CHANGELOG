@@ -1,0 +1,11 @@
+next
+* added enum for xray_lines
+* element is parsed not to u4 but to element_t type
+  which parses element into attribute atom_number (u4)
+  element_name and other stuff can be added easier in the target language.
+* Changed few attribute names to less verboise shorter names:
+  dataset_items -> items
+  sxf_header -> header
+  sxf_main -> contents
+
+v0.2 Initial Release

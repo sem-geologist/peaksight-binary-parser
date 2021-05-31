@@ -27,7 +27,7 @@ It can fully or partly parse these types of binary files currently produced with
   ```
   when if we want to peak into datasets:
   ```python
-  dts = parsed_data.sxf_main.datasets
+  dts = parsed_data.content.datasets
   # if we want to print list of datasets with its setup name and comments:
   for i in dts:
      print(i.dataset_header.setup_file_name.text, i.comment.text)
@@ -44,7 +44,7 @@ While kaitai struct is awesome language-agnostic binary parsing framework, the l
   ```python
    from somewhere_where_ksy_got_compiled_into_python_code.cameca import Cameca
    loaded_file = Cameca.from_file("at_some_path/some_stuff.qtiDat")
-   print(loaded_file.sxf_header.comment.text)
+   print(loaded_file.header.comment.text)
   ```
   we need to use that additional `.text` argument (or a getter if working in other language than python), as `.comment` is not a string type, but special `c_sharp_string` type with two attributes (or two private attributes and coresponding getters): `length` and `text`
 - Some types do not have a direct representation in all target languages. i.e. `FILETIME` or more precise `MS FILETIME`, which is parsed as 64-bit integer in the parser. It is intentended then either be cast into datetime(-like) type with built-in casting (i.e. C#) or use some custom function to convert it into standard unix timestamp.
