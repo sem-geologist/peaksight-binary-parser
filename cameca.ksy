@@ -460,6 +460,9 @@ types:
           cases:
             'signal_source::video': video_signal_header
             'signal_source::im_camera': empty_signal_header
+            'signal_source::qti_diff': limited_signal_header
+            'signal_source::qti_stoch': limited_signal_header
+            'signal_source::qti_matrix': limited_signal_header
             _: xray_signal_header
       - id: not_re_flag
         type: u4
@@ -513,6 +516,7 @@ types:
     instances:
       combi_string:
         value: 'spect_no.to_s + ": " + xtal.full_name'
+        if: '_parent.signal_type == signal_source::wds'
     -webide-representation: '{combi_string:str}'
     
   
@@ -555,6 +559,11 @@ types:
     seq:
       - id: dummy
         size: 68
+        
+  limited_signal_header:
+    seq:
+      - id: element
+        type: element_t
       
   video_signal_header:
     seq:
@@ -579,7 +588,7 @@ types:
     seq:
       - id: struct_v
         type: u4
-      - id: dts_t
+      - id: dataset_type
         type: u4
         enum: dataset_type
       - id: stage_x
@@ -608,8 +617,8 @@ types:
       - id: n_accumulation
         type: u4
         if: |
-          (dts_t != dataset_type::line_stage) and
-          (dts_t != dataset_type::line_beam)
+          (dataset_type != dataset_type::line_stage) and
+          (dataset_type != dataset_type::line_beam)
       - id: not_re_flag
         type: u4
       - id: data_size
@@ -617,18 +626,18 @@ types:
       - id: not_re_flag2
         type: u4
         if: |
-          (dts_t != dataset_type::line_stage) and
-          (dts_t != dataset_type::line_beam)
+          (dataset_type != dataset_type::line_stage) and
+          (dataset_type != dataset_type::line_beam)
       - id: not_re_flag3
         type: f4
         if: |
-          (dts_t != dataset_type::line_stage) and
-          (dts_t != dataset_type::line_beam)
+          (dataset_type != dataset_type::line_stage) and
+          (dataset_type != dataset_type::line_beam)
       - id: not_re_flag4
         type: f4
         if: |
-          (dts_t != dataset_type::line_stage) and
-          (dts_t != dataset_type::line_beam)
+          (dataset_type != dataset_type::line_stage) and
+          (dataset_type != dataset_type::line_beam)
       - id: data
         size: frame_size
         repeat: expr
@@ -665,8 +674,8 @@ types:
       array_data_size:
         value: |
           data_size - (
-            (dts_t == dataset_type::line_stage) or
-            (dts_t == dataset_type::line_beam) ? 0: 12)
+            (dataset_type == dataset_type::line_stage) or
+            (dataset_type == dataset_type::line_beam) ? 0: 12)
       frame_size:
         value: '(img_pixel_dtype.to_i == 0 ? 1 : 4) * n_pixels'
       n_of_frames:
@@ -799,7 +808,7 @@ types:
     seq:
       - id: version
         type: u4
-      - id: dts_t
+      - id: dataset_type
         type: u4
         enum: dataset_type
       - id: data_size
@@ -1720,5 +1729,3 @@ enums:
     104: ska5
     105: ska6
     106: skb1
-    
-    
