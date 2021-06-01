@@ -506,7 +506,7 @@ types:
         size: 4
       - id: hv_set
         type: f4
-      - id: current_set
+      - id: beam_current
         type: f4
       - id: peak_pos
         type: u4
@@ -576,7 +576,7 @@ types:
         size: 24
       - id: hv_set
         type: f4
-      - id: current_set
+      - id: beam_current
         type: f4
       - id: padding_1
         size: 28
