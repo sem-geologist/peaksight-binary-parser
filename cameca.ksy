@@ -544,16 +544,16 @@ types:
         type: u4
       - id: gain
         type: u4
-      - id: dtime
+      - id: dead_time
         type: u4
-      - id: blin
+      - id: base_line
         type: u4
       - id: window
         type: u4
       - id: mode
         type: u4
         enum: pha_mode
-    -webide-representation: 'bias:{bias:dec} V, gain:{gain:dec}, dt:{dtime:dec}µs, ...'
+    -webide-representation: 'bias:{bias:dec} V, gain:{gain:dec}, dt:{dead_time:dec}µs, ...'
         
   empty_signal_header:
     seq:
