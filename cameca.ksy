@@ -153,12 +153,12 @@ types:
       in case of points in grid or line, main and footer parts are arrayed
       separately.
     seq:
-      - id: dataset_header
+      - id: header
         type: dataset_header
       - id: items
-        type: dataset_item(dataset_header.n_of_points)
+        type: dataset_item(header.n_of_points)
         repeat: expr
-        repeat-expr: dataset_header.n_of_elements
+        repeat-expr: header.n_of_elements
       - id: comment
         type: c_sharp_string
       - id: reserved_0
@@ -191,11 +191,11 @@ types:
         size: 12
       - id: reserved_v18
         size: 4
-        if: dataset_header.version >= 0x12
+        if: header.version >= 0x12
       - id: dts_extras_type
         type: u4
         enum: dataset_extras_type
-      - id: dataset_extras
+      - id: extras
         type:
           switch-on: dts_extras_type
           cases:
@@ -215,7 +215,7 @@ types:
         size: 4
       - id: n_space_time
         type: u4
-      - id: item_timestamps_and_positions
+      - id: datetime_and_pos
         type: space_time
         repeat: expr
         repeat-expr: n_space_time
