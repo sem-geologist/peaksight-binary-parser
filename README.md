@@ -14,7 +14,7 @@ It can fully or partly parse these types of binary files currently produced with
 
 ### Working example (for python as target language)
 1. after downloading the repository, the file `cameca.ksy` needs to be compiled into target language with kaitai struct compiler.
-   The "easiest" way is to go to kaitai struct web-ide, drag and drop the file to ide and right click on the file in the list and navigate to `Generate parser` > and select the wished target language, which will present compiled source code in the tab onto hexviewer part of ide. The code can be selected there and copied to a blank new file.
+   The "easiest" way is to go to kaitai struct web-ide (https://ide.kaitai.io/), drag and drop the file to ide and right click on the file in the list and navigate to `Generate parser` > and select the wished target language, which will present compiled source code in the tab onto hexviewer part of ide. The code can be selected there and copied to a blank new file.
    Let's say we selected the python, had copied the code to new blank document in your favorite plain text/code editor, and saved the file as `cameca.py`.
    The alternative way is to install kaitai struct compiler and use CLI in the path of the file:
    `ksc -t python cameca.ksy`, which will produce the `cameca.py` in the same directory (there is also an option to specify directory).
@@ -32,12 +32,13 @@ It can fully or partly parse these types of binary files currently produced with
   for i in dts:
      print(i.dataset_header.setup_file_name.text, i.comment.text)
   ```
-4. To know the relations of objects in the object tree it is adviced to try parsing the binary files in kaitai web ide (https://ide.kaitai.io/) - there navigavable object tree can be consulted for writting code in the target language, albeit there will be some changes according to common practices in given language. I.e. python allows to access arguments directly in the objects, where most other languages will generate getters. Some languages changes lower case into Camel case (i.e. enumeration bundles as classes are renamed in python with CamelCase, while idividual enumeration values are left as is in ksy). Code completion, such as in jupyter notebooks can be also useful, while navigating inside the generated objects.
+4. To know the relations of objects in the object tree it is adviced to try parsing the binary files in kaitai web ide - there navigavable object tree can be consulted for writting code in the target language, albeit there will be some changes according to common practices in given language. I.e. python allows to access arguments directly in the objects, where most other languages will generate getters. Some languages changes lower case into Camel case (i.e. enumeration bundles as classes are renamed in python with CamelCase, while idividual enumeration values are left as is in ksy). Code completion, such as in jupyter notebooks can be also useful, while navigating inside the generated objects.
 
 ### Limitations
 
 While kaitai struct is awesome language-agnostic binary parsing framework, the language-agnosticity produces some limitations. Some data types are not universal between different languages, or built-in type(s) in some target languages has some not-wished side effects.
-- data arrays for images and WDS scans are not parsed with correct datatype but returned as binary string. i.e. compilation to python (as one of main target languages) code does not use numpy arrays. Specifying the right datatype for array in kaitai would cause conversion of numbers to native python number types and array would be returned as a list, which in case of images would consume a lot of memory (as every number is an object in python with its attributes and methods).
+- data arrays for images and WDS scans are not parsed with correct datatype but returned as binary string. i.e. compilation to python (as one of main target languages) code does not use numpy arrays.
+Specifying the right datatype for array in kaitai would cause conversion of numbers to native python number types and array would be returned as a list, which in case of images would consume a lot of memory (as every number is an object in python with its attributes and methods).
    - solution in python: The `numpy` can use the returned bytestring directly as a buffer. This allows to save memory as no array duplication is needed, but values in such array can't be modified without making a copy. 
 - c# strings (in this kaitai code declared as `c_sharp_string`) has prepending 32 bit integer with lengh of the string, kaitai needs to read that before reading the string, and thus textual attributes contain one additional level. i.e. accessing comment of loaded parsed file would look like this: 
 
