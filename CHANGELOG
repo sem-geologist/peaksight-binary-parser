@@ -1,12 +1,17 @@
 next
 * restricted making of combi string only for signals of WDS type
 * added enum for xray_lines
-* element is parsed no more straight into u4 but to element_t type
-  which parses element into attribute atom_number (u4)
-  element_name and other stuff can be added easier in the target language.
+* element is parsed no more into u4 but to element_t type,
+  That tyoe parses element into attribute atom_number (u4);
+  element_name and other attributes can be added this way easier in the target language.
 * Changed few attribute names to less verboise shorter names:
   dataset_items -> items
   sxf_header -> header
   sxf_main -> contents
+* fixed wds_extra_flag, which is actually not a flag but a number of changes;
+  in some wdsDat files file changes are not noted in global file changes scope, but per item
+  and dataset.
+* sanitized and unified datetime_and_pos attributes to be consistent in-between diferent type
+  of files (qtiDat, wdsDat, impDat, qtiSet)
 
 v0.2 Initial Release
