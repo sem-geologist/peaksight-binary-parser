@@ -32,7 +32,7 @@ It can fully or partly parse these types of binary files currently produced with
   for i in dts:
      print(i.dataset_header.setup_file_name.text, i.comment.text)
   ```
-4. To know the relations of objects in the object tree it is adviced to try parsing the binary files in kaitai web ide - there navigavable object tree can be consulted for writting code in the target language, albeit there will be some changes according to common practices in given language. I.e. python allows to access arguments directly in the objects, where most other languages will generate getters. Some languages changes lower case into Camel case (i.e. enumeration bundles as classes are renamed in python with CamelCase, while idividual enumeration values are left as is in ksy). Code completion, such as in jupyter notebooks can be also useful, while navigating inside the generated objects.
+4. To know the relations of objects in the object tree it is adviced to try parsing the binary files in kaitai web ide (in addition to previously drag-dropped cameca.ksy, You need to drag-drop your binary file which You want to parse) - there navigavable object tree can be consulted for writting code in the target language, albeit there will be some differences depending to common practices in target language. For example, python allows to access arguments directly in the objects, where most other languages will generate getter functions. Some languages change lower case into Camel case (for example, enumeration bundles translated to classes in python follow CamelCase rule-for classes, while idividual enumeration values are left as is in ksy). Code completion, such as in jupyter notebooks can be also useful, while navigating inside the generated objects.
 
 ### Limitations
 
