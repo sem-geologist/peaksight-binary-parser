@@ -128,9 +128,9 @@ types:
       - id: focus_frequency
         type: u4
       - id: verify_xtal_after_flip
-        type: u4
+        type: s4
       - id: verify_xtal_before_start
-        type: u4
+        type: s4
       - id: bkgd_measure_every_nth
         type: u4
       - id: decontamination_time
@@ -147,9 +147,15 @@ types:
         type: c_sharp_string
       - id: not_re_global_options_2
         size: 216
-      - id: not_re_global_options_v4
-        size: 12
-        if: _root.header.sxf_version >= 4
+      - id: not_re_global_options_v12
+        size: 4
+        if: version >= 0xC
+      - id: eds_acquisition_time
+        type: f4
+        if: version >= 0xD
+      - id: not_re_global_option_v13
+        size: 4
+        if: version >= 0xD
     -webide-representation: 'v{version:dec}, {n_of_datasets:dec} datasets'
 
   dataset:
