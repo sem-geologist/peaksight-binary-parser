@@ -808,6 +808,10 @@ types:
         type: s4
       - id: reserved_4
         size-eos: true
+    instances:
+      net_intensity:
+        value: (peak_cps - bkgd_inter_cps) / beam_current
+    -webide-representation: '{net_intensity:str}'
 
   wds_qti_signal:
     params:
