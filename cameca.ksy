@@ -793,7 +793,7 @@ types:
         type: f4
       - id: enabled
         type: u4
-        doc: is used in calculations of stat parameters
+        doc: is this item used in calculations
       - id: peak_raw_cts
         type: s4
       - id: bkgd_1_raw_cts
@@ -1426,9 +1426,13 @@ types:
         io: _root._io
         pos: offset
         size: size
+        doc: "raw bytes"
     seq:
-      - id: dummy_data
+      - id: parsed_bytes
         size: size
+        doc: |
+          this needs to be get rid off in target language and replaced with
+          relative seek.
   
   wds_scan_spect_setup:
     seq:
