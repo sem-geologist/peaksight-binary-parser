@@ -1,4 +1,10 @@
 next
+* make continous byte strings under data a new type "lazy_data" which collects global pointer
+  position/offset and size and makes it possible to implement lazy parser in the target
+  language
+* add net instensity instance to calib files
+* struct version update (now parsing files from PS 6.5)
+* fix bug with reading reverse xtal abbrv
 * restricted making of combi string only for signals of WDS type
 * added enum for xray_lines
 * element is parsed no more into u4 but to element_t type,
