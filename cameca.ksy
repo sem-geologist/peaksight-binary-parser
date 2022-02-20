@@ -430,7 +430,7 @@ types:
         type: u4
       - id: focus_freq
         type: u4
-      - id: load_setup_everyth_nth
+      - id: load_setup_every_nth
         type: s4
       - id: not_re_flag4  # TODO
         type: s4
@@ -509,7 +509,7 @@ types:
         type: f4
       - id: reserved_0
         size: 4
-      - id: hv_set
+      - id: hv
         type: f4
       - id: beam_current
         type: f4
@@ -579,7 +579,7 @@ types:
         enum: video_signal_type
       - id: padding_0
         size: 24
-      - id: hv_set
+      - id: hv
         type: f4
       - id: beam_current
         type: f4
@@ -619,7 +619,7 @@ types:
         enum: image_array_dtype
       - id: dwell_time
         type: f4
-      - id: n_accumulation
+      - id: n_frames
         type: u4
         if: |
           (dataset_type != dataset_type::line_stage) and
@@ -1162,7 +1162,7 @@ types:
         type: u4
       - id: mosaic_cols
         type: u4
-      - id: mosaic_segment_enabled_flag_array
+      - id: mosaic_tiling_states
         type: s1
         repeat: expr
         repeat-expr: mosaic_rows * mosaic_cols
