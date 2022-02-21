@@ -181,8 +181,13 @@ types:
       - id: reserved_tmp_sector_1
         size: 4
         if: template_flag == 1
+      - id: is_video_mode
+        type: u4
       - id: reserved_1
-        size: 104
+        size: 100
+        doc: |
+          probably contains frame time (enum) frame resolution (enum),
+          probably...
       - id: image_frames
         type: u4
         doc: |
@@ -190,7 +195,11 @@ types:
           and profiles ignore this field (for profile it is filled 
           with value of previous item if it was img)
       - id: reserved_2
-        size: 12
+        size: 4
+      - id: overscan_x
+        type: f4
+      - id: overscan_y
+        type: f4
       - id: reserved_v18
         size: 4
         if: header.version >= 0x12
@@ -1157,7 +1166,11 @@ types:
       - id: phase_something_str
         type: c_sharp_string
       - id: reserved_0
-        size: 300
+        size: 292
+      - id: overlayed_dataset
+        type: c_sharp_string
+      - id: reserved_01
+        size: 4
       - id: mosaic_rows
         type: u4
       - id: mosaic_cols
