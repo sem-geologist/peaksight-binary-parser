@@ -146,7 +146,25 @@ types:
         size: 12
         if: _root.header.sxf_version >= 4
     -webide-representation: 'v{version:dec}, {n_of_datasets:dec} datasets'
-       
+  
+  polygon_selection:
+    seq:
+      - id: type
+        type: u4
+      - id: n_polygon_nodes
+        type: u4
+      - id: polygon_nodes
+        type: polygon_point
+        repeat: expr
+        repeat-expr: n_polygon_nodes
+      
+  polygon_point:
+    seq:
+      - id: x
+        type: f4
+      - id: y
+        type: f4
+  
   dataset:
     doc: |
       Dataset is constructed form header, main and footer parts;
@@ -164,24 +182,26 @@ types:
       - id: reserved_0
         size: 32
       - id: n_extra_wds_stuff
-        doc: "looks similar to stuff per item"
+        doc: "looks similar to info per item"
         type: u4
       - id: extra_wds_stuff
         type: wds_item_extra_ending  # what about other types?
         repeat: expr
         repeat-expr: n_extra_wds_stuff
-      - id: template_flag
+      - id: has_overview_image
         type: u4
-      - id: reserved_tmp_sector_0
-        size: 8
-        if: template_flag == 1
-      - id: template
+        doc: "former template_flag"
+      - id: polygon_selection
+        type: polygon_selection
+        if: has_overview_image == 1
+      - id: overview_image_dataset
         type: dataset
-        if: template_flag == 1
-      - id: reserved_tmp_sector_1
-        size: 4
-        if: template_flag == 1
-      - id: is_video_mode
+        if: has_overview_image == 1
+      - id: polygon_selection_type
+        type: u4
+        enum: polygon_selection_mode
+        if: has_overview_image == 1
+      - id: is_video_capture_mode
         type: u4
       - id: reserved_1
         size: 100
@@ -398,9 +418,9 @@ types:
       - id: stage_y
         type: s4
       - id: beam_x
-        type: s4
+        type: f4
       - id: beam_y
-        type: s4
+        type: f4
       - id: step_x
         type: f4
       - id: step_y
@@ -415,6 +435,8 @@ types:
         repeat-expr: 3
       - id: n_accumulation
         type: u4
+        doc: |
+          it is also called #Frames in GUI even for qti grid (?)
       - id: dwell_time
         type: f4
       - id: not_re_dataset_flag_4
@@ -492,7 +514,7 @@ types:
         type:
           switch-on: _root.header.file_type
           cases:
-            'file_type::image_mapping_results': image_profile_signal(n_points)
+            'file_type::image_mapping_results': image_profile_signal
             'file_type::wds_results': wds_scan_signal
             'file_type::quanti_results': wds_qti_signal(n_points)
             'file_type::calibration_results': calib_signal
@@ -596,9 +618,6 @@ types:
         size: 28
         
   image_profile_signal:
-    params:
-      - id: n_pixels
-        type: u4
     seq:
       - id: version
         type: u4
@@ -610,9 +629,9 @@ types:
       - id: stage_y
         type: s4
       - id: beam_x
-        type: s4
+        type: f4
       - id: beam_y
-        type: s4
+        type: f4
       - id: step_x
         type: f4
       - id: step_y
@@ -694,9 +713,9 @@ types:
             (dataset_type == dataset_type::line_stage) or
             (dataset_type == dataset_type::line_beam) ? 0: 12)
       frame_size:
-        value: '(img_pixel_dtype.to_i == 0 ? 1 : 4) * n_pixels'
+        value: '(img_pixel_dtype.to_i == 0 ? 1 : 4) * height * width'
       n_of_frames:
-        value: array_data_size / frame_size
+        value: 'frame_size != 0 ? array_data_size / frame_size : 0'
   
   color_bar_ticks:
     seq:
@@ -1714,6 +1733,10 @@ enums:
     5: chi_square_test
     6: sub_chi_p_b_p_b
     7: sub_chi_p_p_b_b
+  
+  polygon_selection_mode:
+    1: on_image_positions
+    2: stage_positions
   
   background_type:
     1: linear
