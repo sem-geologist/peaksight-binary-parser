@@ -158,6 +158,24 @@ types:
         if: version >= 0xD
     -webide-representation: 'v{version:dec}, {n_of_datasets:dec} datasets'
 
+  polygon_selection:
+    seq:
+      - id: type
+        type: u4
+      - id: n_polygon_nodes
+        type: u4
+      - id: polygon_nodes
+        type: polygon_point
+        repeat: expr
+        repeat-expr: n_polygon_nodes
+      
+  polygon_point:
+    seq:
+      - id: x
+        type: f4
+      - id: y
+        type: f4
+
   dataset:
     doc: |
       Dataset is constructed form header, main and footer parts;
@@ -175,29 +193,36 @@ types:
       - id: reserved_0
         size: 32
       - id: n_extra_wds_stuff
-        doc: "looks similar to stuff per item"
+        doc: "looks similar to info per item"
         type: u4
       - id: extra_wds_stuff
         type: wds_item_extra_ending  # what about other types?
         repeat: expr
         repeat-expr: n_extra_wds_stuff
-      - id: template_flag
+      - id: has_overview_image
         type: u4
-      - id: reserved_tmp_sector_0
-        size: 8
-        if: template_flag == 1
-      - id: template
+        doc: "former template_flag"
+      - id: polygon_selection
+        type: polygon_selection
+        if: has_overview_image == 1
+      - id: overview_image_dataset
         type: dataset
-        if: template_flag == 1
-      - id: reserved_tmp_sector_1
-        size: 4
-        if: template_flag == 1
+        if: has_overview_image == 1
+      - id: polygon_selection_type
+        type: u4
+        enum: polygon_selection_mode
+        if: has_overview_image == 1
+      - id: is_video_capture_mode
+        type: u4
       - id: reserved_1
-        size: 100
+        size: 96
+        doc: |
+          probably contains frame time (enum) frame resolution (enum),
+          probably...
       - id: reserved_v17 # or v16 without intermediate file hard to tell
         size: 4
         if: header.version >= 0x11
-      - id: image_frames # or version <0x12 ???
+      - id: image_frames
         type: u4
         doc: |
           somehow images do not use n_accumulated, but this attribute;
@@ -205,7 +230,13 @@ types:
           with value of previous item if it was img)
         if: header.version >= 0x11
       - id: reserved_2
-        size: 12
+        size: 4
+        if: header.version >=0x11
+      - id: overscan_x
+        type: f4
+        if: header.version >=0x11
+      - id: overscan_y
+        type: f4
         if: header.version >=0x11
       - id: reserved_v18
         size: 4
@@ -405,9 +436,9 @@ types:
       - id: stage_y
         type: s4
       - id: beam_x
-        type: s4
+        type: f4
       - id: beam_y
-        type: s4
+        type: f4
       - id: step_x
         type: f4
       - id: step_y
@@ -422,6 +453,8 @@ types:
         repeat-expr: 3
       - id: n_accumulation
         type: u4
+        doc: |
+          it is also called #Frames in GUI even for qti grid (?)
       - id: dwell_time
         type: f4
       - id: not_re_dataset_flag_4
@@ -446,7 +479,7 @@ types:
         type: u4
       - id: focus_freq
         type: u4
-      - id: load_setup_everyth_nth
+      - id: load_setup_every_nth
         type: s4
       - id: not_re_flag4  # TODO
         type: s4
@@ -502,7 +535,7 @@ types:
         type:
           switch-on: _root.header.file_type
           cases:
-            'file_type::image_mapping_results': image_profile_signal(n_points)
+            'file_type::image_mapping_results': image_profile_signal
             'file_type::wds_results': wds_scan_signal
             'file_type::quanti_results': wds_qti_signal(n_points)
             'file_type::calibration_results': calib_signal
@@ -528,7 +561,7 @@ types:
         type: f4
       - id: reserved_0
         size: 4
-      - id: hv_set
+      - id: hv
         type: f4
       - id: beam_current
         type: f4
@@ -598,7 +631,7 @@ types:
         enum: video_signal_type
       - id: padding_0
         size: 24
-      - id: hv_set
+      - id: hv
         type: f4
       - id: beam_current
         type: f4
@@ -606,9 +639,6 @@ types:
         size: 28
         
   image_profile_signal:
-    params:
-      - id: n_pixels
-        type: u4
     seq:
       - id: version
         type: u4
@@ -620,9 +650,9 @@ types:
       - id: stage_y
         type: s4
       - id: beam_x
-        type: s4
+        type: f4
       - id: beam_y
-        type: s4
+        type: f4
       - id: step_x
         type: f4
       - id: step_y
@@ -638,7 +668,7 @@ types:
         enum: image_array_dtype
       - id: dwell_time
         type: f4
-      - id: n_accumulation
+      - id: n_frames
         type: u4
         if: |
           (dataset_type != dataset_type::line_stage) and
@@ -663,7 +693,7 @@ types:
           (dataset_type != dataset_type::line_stage) and
           (dataset_type != dataset_type::line_beam)
       - id: data
-        size: frame_size
+        type: lazy_data(_root._io.pos, frame_size)
         repeat: expr
         repeat-expr: n_of_frames
         doc: |
@@ -704,9 +734,9 @@ types:
             (dataset_type == dataset_type::line_stage) or
             (dataset_type == dataset_type::line_beam) ? 0: 12)
       frame_size:
-        value: '(img_pixel_dtype.to_i == 0 ? 1 : 4) * n_pixels'
+        value: '(img_pixel_dtype.to_i == 0 ? 1 : 4) * height * width'
       n_of_frames:
-        value: array_data_size / frame_size
+        value: 'frame_size != 0 ? array_data_size / frame_size : 0'
   
   color_bar_ticks:
     seq:
@@ -812,7 +842,7 @@ types:
         type: f4
       - id: enabled
         type: u4
-        doc: use in calculations
+        doc: is this item used in calculations
       - id: peak_raw_cts
         type: s4
       - id: bkgd_1_raw_cts
@@ -827,6 +857,10 @@ types:
         type: s4
       - id: reserved_4
         size-eos: true
+    instances:
+      net_intensity:
+        value: (peak_cps - bkgd_inter_cps) / beam_current
+    -webide-representation: '{net_intensity:str}'
 
   wds_qti_signal:
     params:
@@ -931,7 +965,7 @@ types:
       - id: data_array_size
         type: u4
       - id: data
-        size: data_array_size
+        type: lazy_data(_root._io.pos, data_array_size)
       - id: not_re_flag
         type: u4
       - id: signal_name
@@ -1172,12 +1206,16 @@ types:
       - id: phase_something_str
         type: c_sharp_string
       - id: reserved_0
-        size: 300
+        size: 292
+      - id: overlayed_dataset
+        type: c_sharp_string
+      - id: reserved_01
+        size: 4
       - id: mosaic_rows
         type: u4
       - id: mosaic_cols
         type: u4
-      - id: mosaic_segment_enabled_flag_array
+      - id: mosaic_tiling_states
         type: s1
         repeat: expr
         repeat-expr: mosaic_rows * mosaic_cols
@@ -1426,6 +1464,23 @@ types:
         type: qti_wds_measurement_setups
         if: wds_measurement_struct_type >= 19
   
+  lazy_data:
+    doc: |
+          its _read method needs to be reimplemented in target language
+          to seek in the stream by provided size by parameter instead
+          of reading into memory
+    params:
+      - id: offset
+        type: u4
+      - id: size
+        type: u4
+    seq:
+      - id: bytes
+        size: size
+        doc: |
+          this needs to be get rid off in target language and replaced with
+          relative seek.
+  
   wds_scan_spect_setup:
     seq:
       - id: xtal
@@ -1587,7 +1642,7 @@ types:
       unix_timestamp:
         value: ms_filetime / 10000000. - 11644473600
         doc: 'seconds since Jan 1 1970'
-  
+
   element_t:
     seq:
       - id: atomic_number
@@ -1699,6 +1754,10 @@ enums:
     5: chi_square_test
     6: sub_chi_p_b_p_b
     7: sub_chi_p_p_b_b
+  
+  polygon_selection_mode:
+    1: on_image_positions
+    2: stage_positions
   
   background_type:
     1: linear
