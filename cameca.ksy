@@ -66,13 +66,18 @@ types:
       - id: comment
         type: c_sharp_string
       - id: reserved_0
-        size: 0x1C
+        size: 0x18
+      - id: reserved_v3
+        size: 0x4
+        if: sxf_version >= 3
       - id: n_file_modifications
         type: u4
+        if: sxf_version >= 3
       - id: file_changes
         type: file_modification
         repeat: expr
         repeat-expr: n_file_modifications
+        if: sxf_version >= 3
       - id: reserved_v4
         size: 8
         if: sxf_version >= 4
@@ -123,9 +128,9 @@ types:
       - id: focus_frequency
         type: u4
       - id: verify_xtal_after_flip
-        type: u4
+        type: s4
       - id: verify_xtal_before_start
-        type: u4
+        type: s4
       - id: bkgd_measure_every_nth
         type: u4
       - id: decontamination_time
@@ -142,11 +147,17 @@ types:
         type: c_sharp_string
       - id: not_re_global_options_2
         size: 216
-      - id: not_re_global_options_v4
-        size: 12
-        if: _root.header.sxf_version >= 4
+      - id: not_re_global_options_v12
+        size: 4
+        if: version >= 0xC
+      - id: eds_acquisition_time
+        type: f4
+        if: version >= 0xD
+      - id: not_re_global_option_v13
+        size: 4
+        if: version >= 0xD
     -webide-representation: 'v{version:dec}, {n_of_datasets:dec} datasets'
-  
+
   polygon_selection:
     seq:
       - id: type
@@ -164,7 +175,7 @@ types:
         type: f4
       - id: y
         type: f4
-  
+
   dataset:
     doc: |
       Dataset is constructed form header, main and footer parts;
@@ -204,22 +215,29 @@ types:
       - id: is_video_capture_mode
         type: u4
       - id: reserved_1
-        size: 100
+        size: 96
         doc: |
           probably contains frame time (enum) frame resolution (enum),
           probably...
+      - id: reserved_v17 # or v16 without intermediate file hard to tell
+        size: 4
+        if: header.version >= 0x11
       - id: image_frames
         type: u4
         doc: |
           somehow images do not use n_accumulated, but this attribute;
           and profiles ignore this field (for profile it is filled 
           with value of previous item if it was img)
+        if: header.version >= 0x11
       - id: reserved_2
         size: 4
+        if: header.version >=0x11
       - id: overscan_x
         type: f4
+        if: header.version >=0x11
       - id: overscan_y
         type: f4
+        if: header.version >=0x11
       - id: reserved_v18
         size: 4
         if: header.version >= 0x12
@@ -238,7 +256,7 @@ types:
             'dataset_extras_type::qti_v5_footer': dts_qti_footer(dts_extras_type)
             'dataset_extras_type::qti_v6_footer': dts_qti_footer(dts_extras_type)
     -webide-representation: '{comment.text}'
-    
+       
   dts_qti_footer:
     params:
       - id: dts_extras_type
@@ -504,12 +522,15 @@ types:
         type: u4
       - id: reserved_0
         size: 12
+        if: version >= 3
       - id: n_of_reserved_1_blocks
         type: u4
+        if: version >= 3
       - id: reserved_1_blocks
         size: 12
         repeat: expr
         repeat-expr: n_of_reserved_1_blocks
+        if: version >= 3
       - id: signal
         type:
           switch-on: _root.header.file_type
@@ -519,7 +540,7 @@ types:
             'file_type::quanti_results': wds_qti_signal(n_points)
             'file_type::calibration_results': calib_signal
     -webide-representation: '{signal_type}'
-     
+
   xray_signal_header:
     seq:
       - id: element
