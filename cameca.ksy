@@ -1756,6 +1756,7 @@ enums:
     7: sub_chi_p_p_b_b
   
   polygon_selection_mode:
+    0: none
     1: on_image_positions
     2: stage_positions
   
