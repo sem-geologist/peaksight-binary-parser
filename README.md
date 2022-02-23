@@ -1,6 +1,6 @@
 # peaksight-binary-parser
 Parsing description reverse engineered and writen in Kaitai Struct for reading the binary electron microprobe data files produced with Cameca Peaksight software.
-It can fully or partly parse these types of binary files currently produced with Peaksight v5.1 to v6.4:
+It can fully or partly parse these types of binary files currently produced with Peaksight v4.2 (?) to v6.5:
 * impDat
 * wdsDat
 * qtiDat
